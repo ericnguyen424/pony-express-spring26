@@ -1,12 +1,11 @@
 [project]
 name = "pony-express-backend"
-version = "0.0.0"
+version = "0.1.0"
 description = "Backend REST API for Pony Express project"
 readme = "README.md"
 requires-python = ">=3.13"
 authors = [
-    { name = "<your name> (<your github username>)", email = "<your uNID>@utah.edu" },
-    # e.g. { name = "Ellen Ripley (ellenripley)", email = "u0123456@utah.edu" } # todo: delete this line after updating author info
+    { name = "Eric Nguyen (ericnguyen424)", email = "u1380461@utah.edu" },
 ]
 dependencies = [
     "fastapi[standard]>=0.128.0",
