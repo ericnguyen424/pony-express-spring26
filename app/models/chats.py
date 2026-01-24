@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from app.models.shared import CollectionMetadata
 
 class Chat(BaseModel):
     id: int

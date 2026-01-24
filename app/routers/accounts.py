@@ -6,7 +6,7 @@ from fastapi.exceptions import HTTPException
 from app.models.accounts import Account, AccountCollection
 from app.models.shared import CollectionMetadata
 
-from app.assign02_data import ACCOUNTS # to be deleted in future
+from app.assign02_data import ACCOUNTS  # to be deleted in future
 
 
 accounts_router = APIRouter(prefix="/accounts", tags=["Accounts"])
@@ -32,4 +32,3 @@ def get_account(account_id: int) -> Account:
             return Account(**account)
 
     raise HTTPException(404)
-
