@@ -1,3 +1,4 @@
+# to be deleted/reworked in the future 
 import json
 
 with open("data/assign02_data.json") as f:
