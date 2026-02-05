@@ -1,8 +1,25 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+# Routers
 from app.routers.accounts import accounts_router
 from app.routers.chats import chat_router
 
-app: FastAPI = FastAPI()
+# Database engine
+from app.dependencies import initialize_database
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Lifespan event for events to run on startup and shutdown."""
+
+    initialize_database()
+    yield
+
+app: FastAPI = FastAPI(
+    title = "Pony Express API",
+    lifespan = lifespan
+)
 
 
 app.include_router(accounts_router)

@@ -6,17 +6,30 @@ from fastapi.exceptions import HTTPException
 from app.models.accounts import Account, AccountCollection
 from app.models.shared import CollectionMetadata
 
-from app.assign02_data import ACCOUNTS  # to be deleted in future
-
+# Database Imports
+from app.database import accounts as accounts_db
+from app.database import chats as chats_db
+from app.database import memberships as memberships_db
+from app.database import messages as messages_db
+from app.database.schema import Account as DBAccount
+from app.database.schema import ChatMembership as DBChatMembership
+from app.database.schema import Administrator as DBAdministrator
+from app.database.schema import Chat as DBChat
+from app.database.schema import Message as DBMessage
+from app.dependencies import DBSession
 
 accounts_router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
-
 @accounts_router.get("")
-def get_accounts(sort: Literal["id", "username"] = "id") -> AccountCollection:
+def get_accounts(
+    session: DBSession, 
+    sort: Literal["id", "username"] = "id"
+    ) -> AccountCollection:
+
     """Retrieve the list of accounts default sorted by ID. Pass in 'username' if you wish to sort by usernames."""
-    accounts = sorted(ACCOUNTS, key=lambda account: account[sort])
-    accounts = [Account(**account) for account in accounts]
+
+    db_accounts = accounts_db.get_accounts(session, sort = sort)
+    accounts = [Account(**db_account.model_dump(exclude = {"hashed_password"})) for db_account in db_accounts]
 
     return AccountCollection(
         metadata=CollectionMetadata(count=len(accounts), sort=sort),
@@ -24,11 +37,19 @@ def get_accounts(sort: Literal["id", "username"] = "id") -> AccountCollection:
     )
 
 
-@accounts_router.get("/{account_id}")
-def get_account(account_id: int) -> Account:
+@accounts_router.get("/{account_id}", response_model = Account)
+def get_account(
+    session: DBSession, 
+    account_id: int
+    ) -> DBAccount:
+    
     """Retrieve an account matching a given account_id. Returns 404 if not found."""
-    for account in ACCOUNTS:
-        if account["id"] == account_id:
-            return Account(**account)
 
-    raise HTTPException(404)
+    db_account = accounts_db.get_account(DBSession, account_id = account_id)
+    if db_account is not None:
+        return db_account
+    
+    raise HTTPException(
+        status_code = 404,
+        detail = "Account not found"
+    )

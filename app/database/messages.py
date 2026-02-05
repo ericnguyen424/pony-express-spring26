@@ -11,14 +11,12 @@ from app.database.schema import *
 def get_messages_by_chat_id(
         session: Session, 
         chat_id = int,
-        sort: Literal["id", "text"] = "id"
 ) -> Sequence[Message] | None:
     """Retrieve all messages that belong to a specific chat.
 
     Args:
         session (Session): the database session
         chat_id: chat id to retrieve from
-        sort (str): the column by which to order the message collection (default="id")
     Returns:
         Sequence[Message]: the sequence of messages in the chat or none
     """
@@ -26,7 +24,7 @@ def get_messages_by_chat_id(
     stmt = (
         select(Message)
         .where(Message.chat_id == chat_id)
-        .order_by(sort)
+        .order_by("created_at")
     )
 
     results = session.exec(stmt)
