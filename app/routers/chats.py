@@ -10,29 +10,19 @@ from app.models.shared import CollectionMetadata
 from app.models.messages import Message, MessageCollection
 
 # Database Imports
-from app.database import accounts as accounts_db
 from app.database import chats as chats_db
 from app.database import memberships as memberships_db
 from app.database import messages as messages_db
-from app.database.schema import Account as DBAccount
-from app.database.schema import ChatMembership as DBChatMembership
-from app.database.schema import Administrator as DBAdministrator
-from app.database.schema import Chat as DBChat
-from app.database.schema import Message as DBMessage
 from app.dependencies import DBSession
 
 chat_router = APIRouter(prefix="/chats", tags=["Chats"])
 
 
 @chat_router.get("")
-def get_chats(
-    session: DBSession,
-    sort: Literal["id", "name"] = "id"
-    ) -> ChatCollection:
-
+def get_chats(session: DBSession, sort: Literal["id", "name"] = "id") -> ChatCollection:
     """Retrieve the list of chats default sorted by ID. Pass in 'name' if you wish to sort by name."""
 
-    db_chats = chats_db.get_chats(session, sort = sort)
+    db_chats = chats_db.get_chats(session, sort=sort)
     chats = [Chat(**db_chat.model_dump()) for db_chat in db_chats]
 
     return ChatCollection(
@@ -41,42 +31,32 @@ def get_chats(
     )
 
 
-@chat_router.get("/{chat_id}", response_model = Chat)
-def get_chat(
-    session: DBSession,
-    chat_id: int
-    ) -> Chat:
-
+@chat_router.get("/{chat_id}", response_model=Chat)
+def get_chat(session: DBSession, chat_id: int) -> Chat:
     """Retrieve a chat matching a given chat_id. Returns 404 if not found."""
 
-    db_chat = chats_db.get(session, chat_id = chat_id)
-    if db_chat is not None:
-        return db_chat
-    
-    raise HTTPException(
-        status_code = 404,
-        detail = "Chat not found"
-    )
+    db_chat = chats_db.get_chat(session, chat_id=chat_id)
+    if db_chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    return db_chat
 
 
 @chat_router.get("/{chat_id}/accounts")
 def get_chat_accounts(
-    session: DBSession,
-    chat_id: int, 
-    sort: Literal["id", "username"] = "id"
-    ) -> AccountCollection:
-
+    session: DBSession, chat_id: int, sort: Literal["id", "username"] = "id"
+) -> AccountCollection:
     """Returns all accounts present in the corresponding chat_id"""
 
-    db_accounts = memberships_db.get_accounts_by_chat_id(session, chat_id, sort = sort)
+    db_accounts = memberships_db.get_accounts_by_chat_id(session, chat_id, sort=sort)
 
     if db_accounts is None:
-        raise HTTPException(
-        status_code = 404,
-        detail = "Chat not found"
-        )
-    
-    accounts = [Account(**db_account.model_dump(exclude = {"hashed_password"})) for db_account in db_accounts]
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    accounts = [
+        Account(**db_account.model_dump(exclude={"hashed_password"}))
+        for db_account in db_accounts
+    ]
 
     return AccountCollection(
         metadata=CollectionMetadata(count=len(accounts), sort=sort),
@@ -85,20 +65,13 @@ def get_chat_accounts(
 
 
 @chat_router.get("/{chat_id}/messages")
-def get_messages(
-    session: DBSession,
-    chat_id: int
-    ) -> MessageCollection:
-
+def get_messages(session: DBSession, chat_id: int) -> MessageCollection:
     """Retrieve all messages matching a given chat_id."""
-    
+
     db_messages = messages_db.get_messages_by_chat_id(session, chat_id)
 
     if db_messages is None:
-        raise HTTPException(
-        status_code = 404,
-        detail = "Chat not found"
-        )
+        raise HTTPException(status_code=404, detail="Chat not found")
 
     messages = [Message(**db_message.model_dump()) for db_message in db_messages]
 

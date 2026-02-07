@@ -2,16 +2,16 @@
 Database functionality for chat memberships table
 
 """
+
 from collections.abc import Sequence
 from typing import Literal
 from sqlmodel import Session, select
-from app.database.schema import *
+from app.database.schema import Account, ChatMembership, Chat
+
 
 # Retrieve **accounts that belong to a specific chat**
 def get_accounts_by_chat_id(
-        session: Session, 
-        chat_id = int,
-        sort: Literal["id", "username"] = "id"
+    session: Session, chat_id=int, sort: Literal["id", "username"] = "id"
 ) -> Sequence[Account] | None:
     """Retrieve all accounts that belong to a specific chat.
 
@@ -23,6 +23,10 @@ def get_accounts_by_chat_id(
         Sequence[Account]: the sequence of accounts in the chat or none
     """
 
+    chat_exists = session.get(Chat, chat_id)
+    if chat_exists is None:
+        return None
+
     stmt = (
         select(Account)
         .join(ChatMembership)
@@ -32,4 +36,3 @@ def get_accounts_by_chat_id(
 
     results = session.exec(stmt)
     return results.all()
-    

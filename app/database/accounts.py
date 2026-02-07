@@ -6,13 +6,13 @@ Database functionality for accounts table
 from collections.abc import Sequence
 from typing import Literal
 from sqlmodel import Session, select
-from app.database.schema import *
+from app.database.schema import Account
 
 
 # Retrieve **all accounts**
 def get_accounts(
-        session: Session,
-        sort: Literal["id", "username"] = "id", 
+    session: Session,
+    sort: Literal["id", "username"] = "id",
 ) -> Sequence[Account]:
     """Retrieve all accounts from the database.
 
@@ -27,7 +27,7 @@ def get_accounts(
     results = session.exec(stmt)
     return results.all()
 
-    
+
 # Retrieve **one account** by ID
 def get_account(session: Session, account_id: int) -> Account | None:
     """Retrieve account from database by its id.
@@ -41,4 +41,3 @@ def get_account(session: Session, account_id: int) -> Account | None:
     """
 
     return session.get(Account, account_id)
-

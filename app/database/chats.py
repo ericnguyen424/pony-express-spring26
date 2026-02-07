@@ -6,13 +6,13 @@ Database functionality for chats table
 from collections.abc import Sequence
 from typing import Literal
 from sqlmodel import Session, select
-from app.database.schema import *
+from app.database.schema import Account, Chat
 
 
 # Retrieve **all chats**
 def get_chats(
-        session: Session,
-        sort: Literal["id", "name"] = "id", 
+    session: Session,
+    sort: Literal["id", "name"] = "id",
 ) -> Sequence[Account]:
     """Retrieve all chats from the database.
 
@@ -27,7 +27,7 @@ def get_chats(
     results = session.exec(stmt)
     return results.all()
 
-    
+
 # Retrieve **one account** by ID
 def get_chat(session: Session, chat_id: int) -> Chat | None:
     """Retrieve chat from database by its id.
@@ -41,4 +41,3 @@ def get_chat(session: Session, chat_id: int) -> Chat | None:
     """
 
     return session.get(Chat, chat_id)
-

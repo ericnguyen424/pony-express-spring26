@@ -16,14 +16,13 @@ async def lifespan(_app: FastAPI):
     initialize_database()
     yield
 
-app: FastAPI = FastAPI(
-    title = "Pony Express API",
-    lifespan = lifespan
-)
+
+app: FastAPI = FastAPI(title="Pony Express API", lifespan=lifespan)
 
 
 app.include_router(accounts_router)
 app.include_router(chat_router)
+
 
 @app.get("/status")
 def get_status() -> dict[str, str]:
