@@ -3,28 +3,27 @@ from typing import Literal
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 
+# Model Imports
 from app.models.chats import Chat, ChatCollection
 from app.models.accounts import Account, AccountCollection
 from app.models.shared import CollectionMetadata
 from app.models.messages import Message, MessageCollection
 
-
-from app.assign02_data import (
-    ACCOUNTS,
-    CHATS,
-    MESSAGES,
-    CHAT_MEMBERSHIPS,
-)  # to be deleted in future
-
+# Database Imports
+from app.database import chats as chats_db
+from app.database import memberships as memberships_db
+from app.database import messages as messages_db
+from app.dependencies import DBSession
 
 chat_router = APIRouter(prefix="/chats", tags=["Chats"])
 
 
 @chat_router.get("")
-def get_chats(sort: Literal["id", "name"] = "id") -> ChatCollection:
+def get_chats(session: DBSession, sort: Literal["id", "name"] = "id") -> ChatCollection:
     """Retrieve the list of chats default sorted by ID. Pass in 'name' if you wish to sort by name."""
-    chats = sorted(CHATS, key=lambda chat: chat[sort])
-    chats = [Chat(**chat) for chat in chats]
+
+    db_chats = chats_db.get_chats(session, sort=sort)
+    chats = [Chat(**db_chat.model_dump()) for db_chat in db_chats]
 
     return ChatCollection(
         metadata=CollectionMetadata(count=len(chats), sort=sort),
@@ -32,38 +31,32 @@ def get_chats(sort: Literal["id", "name"] = "id") -> ChatCollection:
     )
 
 
-@chat_router.get("/{chat_id}")
-def get_chat(chat_id: int) -> Chat:
+@chat_router.get("/{chat_id}", response_model=Chat)
+def get_chat(session: DBSession, chat_id: int) -> Chat:
     """Retrieve a chat matching a given chat_id. Returns 404 if not found."""
-    for chat in CHATS:
-        if chat["id"] == chat_id:
-            return Chat(**chat)
 
-    raise HTTPException(404)
+    db_chat = chats_db.get_chat(session, chat_id=chat_id)
+    if db_chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    return db_chat
 
 
 @chat_router.get("/{chat_id}/accounts")
 def get_chat_accounts(
-    chat_id: int, sort: Literal["id", "username"] = "id"
+    session: DBSession, chat_id: int, sort: Literal["id", "username"] = "id"
 ) -> AccountCollection:
     """Returns all accounts present in the corresponding chat_id"""
 
-    all_chat_ids = (chat["id"] for chat in CHATS)
-    if chat_id not in all_chat_ids:
-        raise HTTPException(404)
+    db_accounts = memberships_db.get_accounts_by_chat_id(session, chat_id, sort=sort)
 
-    account_ids = (
-        membership["account_id"]
-        for membership in CHAT_MEMBERSHIPS
-        if membership.get("chat_id") == chat_id
-    )
+    if db_accounts is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
 
-    accounts = sorted(
-        (account for account in ACCOUNTS if account.get("id") in account_ids),
-        key=lambda account: account[sort],
-    )
-
-    accounts = [Account(**account) for account in accounts]
+    accounts = [
+        Account(**db_account.model_dump(exclude={"hashed_password"}))
+        for db_account in db_accounts
+    ]
 
     return AccountCollection(
         metadata=CollectionMetadata(count=len(accounts), sort=sort),
@@ -72,19 +65,15 @@ def get_chat_accounts(
 
 
 @chat_router.get("/{chat_id}/messages")
-def get_messages(chat_id: int) -> MessageCollection:
+def get_messages(session: DBSession, chat_id: int) -> MessageCollection:
     """Retrieve all messages matching a given chat_id."""
 
-    if chat_id not in [chat["id"] for chat in CHATS]:
-        raise HTTPException(404)
+    db_messages = messages_db.get_messages_by_chat_id(session, chat_id)
 
-    # Filter + sort messages by created_at
-    messages = sorted(
-        (message for message in MESSAGES if message["chat_id"] == chat_id),
-        key=lambda message: message["created_at"],
-    )
+    if db_messages is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
 
-    messages = [Message(**message) for message in messages]
+    messages = [Message(**db_message.model_dump()) for db_message in db_messages]
 
     return MessageCollection(
         metadata=CollectionMetadata(count=len(messages), sort="created_at"),
