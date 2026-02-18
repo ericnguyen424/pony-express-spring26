@@ -6,9 +6,11 @@ Database functionality for chats table
 from collections.abc import Sequence
 from typing import Literal
 from sqlmodel import Session, select
-from app.database.schema import Account, Chat
+from app.database.schema import Account, Chat, ChatMembership
 from app.models.chats import ChatCreate, ChatUpdate
-from app.exceptions import EntityNotFoundException
+from app.exceptions import EntityNotFoundException, NonUniqueException
+from app.database.accounts import find as find_account
+
 
 # Retrieve **all chats**
 def get_chats(
@@ -70,12 +72,26 @@ def create(session: Session, create: ChatCreate) -> Chat:
         
     Returns:
         newly created chat
+
+    Raises EntityNotFoundException if no such account_id exists
     """
+    
+    # Raise exception if account_id doesn't exist or chat_name already exists
+    find_account(create.owner_id)
+    if does_chat_name_exist(create.name):
+        raise NonUniqueException("Chat", create.name)
+    
 
     chat = Chat(**create.model_dump())
     session.add(chat)
     session.commit()
     session.refresh(chat)
+
+    # Create membership for chat
+    membership = ChatMembership(account_id = create.owner_id, chat_id = chat.id)
+    session.add(membership)
+    session.commit()
+
     return chat
 
 def update(session: Session, chat_id: int, update: ChatUpdate) -> Chat:
@@ -118,3 +134,10 @@ def delete(session: Session, chat_id: int) -> None:
     chat = find(session, chat_id)
     session.delete(chat)
     session.commit()
+
+# queries the database to check if a chat name already exists
+def does_chat_name_exist(session: Session, name: str) -> bool:
+    stmt = select(Chat).where(Chat.name == name)
+    if (session.exec(stmt).first()) is None:
+        return False
+    return True

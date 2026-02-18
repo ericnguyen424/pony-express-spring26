@@ -33,3 +33,11 @@ class EntityNotFoundException(BadRequestException):
             error = "entity_not_found",
             message=f"Unable to find {entity_name} with id= {entity_id}",
         )
+
+class NonUniqueException(BadRequestException):
+    def __init(self, entity_name: str, entity_identifier: str):
+        super().__init__(
+            status_code = 409,
+            error = "non_unique_identifier_found",
+            message=f"There already exists a {entity_name} with identifier {entity_identifier}"
+        )

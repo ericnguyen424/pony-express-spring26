@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from typing import Literal
 from sqlmodel import Session, select
 from app.database.schema import Account
-
+from app.exceptions import EntityNotFoundException
 
 # Retrieve **all accounts**
 def get_accounts(
@@ -41,3 +41,20 @@ def get_account(session: Session, account_id: int) -> Account | None:
     """
 
     return session.get(Account, account_id)
+
+def find(session: Session, account_id: int) -> Account:
+    """Retrieve account from db by its id.
+    
+    Args: 
+        session (Session): db session
+        account_id (int): id of requested account
+
+    Returns:
+        Account with given id
+
+    Raises EntityNotFoundException: if no such account exists
+    """
+    account = get_account(session, account_id)
+    if account is None:
+        raise EntityNotFoundException("Account", account_id)
+    return account
