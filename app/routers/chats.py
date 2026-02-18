@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 
 # Model Imports
-from app.models.chats import Chat, ChatCollection
+from app.models.chats import Chat, ChatCollection, ChatCreate, ChatUpdate
 from app.models.accounts import Account, AccountCollection
 from app.models.shared import CollectionMetadata
 from app.models.messages import Message, MessageCollection
@@ -14,6 +14,7 @@ from app.database import chats as chats_db
 from app.database import memberships as memberships_db
 from app.database import messages as messages_db
 from app.dependencies import DBSession
+from app.database.schema import Chat as DBChat
 
 chat_router = APIRouter(prefix="/chats", tags=["Chats"])
 
@@ -79,3 +80,22 @@ def get_messages(session: DBSession, chat_id: int) -> MessageCollection:
         metadata=CollectionMetadata(count=len(messages), sort="created_at"),
         messages=messages,
     )
+
+@chat_router.post("", response_model = Chat, status_code = 201)
+def create_chat(session: DBSession, create: ChatCreate) -> DBChat:
+    """Add a new chat"""
+
+    return chats_db.create(session, create)
+
+@chat_router.put("/{chat_id}", response_model = Chat)
+def update_chat(session: DBSession, chat_id: int, update: ChatUpdate) -> DBChat:
+    """Update a chat"""
+
+    return chats_db.update(session, chat_id, update)
+
+@chat_router.delete("/{chat_id}", status_code = 204)
+def delete_chat(session: DBSession, chat_id: int) -> None:
+    """Remove a chat from the library"""
+
+    chats_db.delete(session, chat_id)
+    
