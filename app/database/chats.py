@@ -8,9 +8,9 @@ from typing import Literal
 from sqlmodel import Session, select
 from app.database.schema import Account, Chat, ChatMembership
 from app.models.chats import ChatCreate, ChatUpdate
-from app.exceptions import EntityNotFoundException, NonUniqueException
+from app.exceptions import EntityNotFoundException, NonUniqueException, BadRequestException
 from app.database.accounts import find as find_account
-
+from app.database.memberships import create as create_membership
 
 # Retrieve **all chats**
 def get_chats(
@@ -73,7 +73,9 @@ def create(session: Session, create: ChatCreate) -> Chat:
     Returns:
         newly created chat
 
-    Raises EntityNotFoundException if no such account_id exists
+    Raises:
+        EntityNotFoundException if no such account_id exists
+        NonUniqueException if chat name already exists
     """
     
     # Raise exception if account_id doesn't exist or chat_name already exists
@@ -87,11 +89,7 @@ def create(session: Session, create: ChatCreate) -> Chat:
     session.commit()
     session.refresh(chat)
 
-    # Create membership for chat
-    membership = ChatMembership(account_id = create.owner_id, chat_id = chat.id)
-    session.add(membership)
-    session.commit()
-
+    create_membership(session, create.owner_id, chat.id)
     return chat
 
 def update(session: Session, chat_id: int, update: ChatUpdate) -> Chat:
@@ -105,8 +103,21 @@ def update(session: Session, chat_id: int, update: ChatUpdate) -> Chat:
     Returns:
         Updated Chat
 
-    Raises EntityNotFoundException: If no such chat exists
+    Raises:
+      EntityNotFoundException: If no such chat/owner exists
+      NonUniqueException: If chat name is already taken
+
+
     """
+
+    find_account(update.owner_id)
+
+    if does_chat_name_exist(update.name):
+        raise NonUniqueException("Chat", update.name)
+
+    if is_account_in_chat(session, update.owner_id, chat_id) is False:
+        raise BadRequestException("invalid_parameter", f"Owner with id {update.owner_id} is not a member of chat with id {chat_id}")
+
 
     chat = find(session, chat_id)
     chat.name = update.name
@@ -138,6 +149,11 @@ def delete(session: Session, chat_id: int) -> None:
 # queries the database to check if a chat name already exists
 def does_chat_name_exist(session: Session, name: str) -> bool:
     stmt = select(Chat).where(Chat.name == name)
-    if (session.exec(stmt).first()) is None:
-        return False
-    return True
+    return session.exec(stmt).first() is not None
+
+def is_account_in_chat(session: Session, account_id: int, chat_id: int) -> bool:
+    stmt = select(ChatMembership).where(
+        ChatMembership.account_id == account_id,
+        ChatMembership.chat_id == chat_id
+    )
+    return session.exec(stmt).first() is not None

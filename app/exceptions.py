@@ -41,3 +41,4 @@ class NonUniqueException(BadRequestException):
             error = "non_unique_identifier_found",
             message=f"There already exists a {entity_name} with identifier {entity_identifier}"
         )
+
