@@ -26,7 +26,8 @@ class BadRequestException(Exception):
         )
     
 class EntityNotFoundException(BadRequestException):
-    def __init__(self, entity_name: str, entity_id: int);
+    def __init__(self, entity_name: str, entity_id: int):
+    
         super().__init__(
             status_code = 404,
             error = "entity_not_found",
