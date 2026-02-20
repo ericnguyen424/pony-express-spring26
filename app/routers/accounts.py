@@ -33,11 +33,8 @@ def get_accounts(
 
 
 @accounts_router.get("/{account_id}", response_model=Account)
-def get_account(session: DBSession, account_id: int) -> DBAccount:
+def get_account(session: DBSession, account_id: int) -> Account:
     """Retrieve an account matching a given account_id. Returns 404 if not found."""
 
-    db_account = accounts_db.get_account(session, account_id=account_id)
-    if db_account is None:
-        raise HTTPException(status_code=404, detail="Account not found")
-
-    return db_account
+    db_account = accounts_db.find(session, account_id)
+    return Account(**db_account.model_dump(exclude={"hashed_password"}))

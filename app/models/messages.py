@@ -18,7 +18,7 @@ class Message(BaseModel):
                     "text": "Hello!",
                     "account_id": 3,
                     "chat_id": 4,
-                    "created_at": "2025-08-20 10:20:21.123456"
+                    "created_at": "2025-08-20 10:20:21.123456",
                 },
             ],
         },
@@ -29,8 +29,7 @@ class MessageCollection(BaseModel):
     metadata: CollectionMetadata
     messages: list[Message]
     model_config = ConfigDict(
-
-    json_schema_extra={
+        json_schema_extra={
             "examples": [
                 {
                     "metadata": {"count": 1, "sort": "id"},
@@ -40,7 +39,7 @@ class MessageCollection(BaseModel):
                             "text": "Hello!",
                             "account_id": 3,
                             "chat_id": 4,
-                            "created_at": "2025-08-20 10:20:21.123456"
+                            "created_at": "2025-08-20 10:20:21.123456",
                         },
                     ],
                 }
@@ -48,15 +47,16 @@ class MessageCollection(BaseModel):
         }
     )
 
-class MessageCreate(BaseModel):
-    text: str = Field(description = "Message Text")
-    account_id: int = Field(description = "ID of message creator")
-    chat_id: int = Field(description = "ID of chat message created in")
-    created_at: datetime = Field(description = "Datetime of creation")
 
-class MessageUpdate(MessageCreate):
-    text: str = Field(description = "Message Text")
-    account_id: int = Field(description = "ID of message creator")
-    chat_id: int = Field(description = "ID of chat message created in")
-    created_at: datetime = Field(description = "Datetime of creation")
-    
+class MessageCreate(BaseModel):
+    text: str = Field(description="Message Text")
+    account_id: int = Field(description="ID of message creator")
+    chat_id: int = Field(description="ID of chat message created in")
+    created_at: datetime = Field(description="Datetime of creation")
+
+
+class MessageUpdate(BaseModel):
+    text: str = Field(description="Message Text")
+    account_id: int = Field(description="ID of message creator")
+    chat_id: int = Field(description="ID of chat")
+    owner_id: int = Field(description="ID of account owner performing update")

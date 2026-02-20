@@ -30,3 +30,4 @@ def test_client(session: Session) -> Generator[TestClient]:
 
     yield TestClient(app)
     app.dependency_overrides.clear()
+

@@ -9,6 +9,7 @@ from sqlmodel import Session, select
 from app.database.schema import Account
 from app.exceptions import EntityNotFoundException
 
+
 # Retrieve **all accounts**
 def get_accounts(
     session: Session,
@@ -42,10 +43,11 @@ def get_account(session: Session, account_id: int) -> Account | None:
 
     return session.get(Account, account_id)
 
+
 def find(session: Session, account_id: int) -> Account:
     """Retrieve account from db by its id.
-    
-    Args: 
+
+    Args:
         session (Session): db session
         account_id (int): id of requested account
 

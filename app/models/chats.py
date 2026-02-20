@@ -4,8 +4,8 @@ from app.models.shared import CollectionMetadata
 
 class Chat(BaseModel):
     id: int = Field(description="The id of the chat")
-    name: str = Field(description = "The name of the chat")
-    owner_id: int = Field(description = "The chat owner's id")
+    name: str = Field(description="The name of the chat")
+    owner_id: int = Field(description="The chat owner's id")
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -41,9 +41,11 @@ class ChatCollection(BaseModel):
         }
     )
 
+
 class ChatCreate(BaseModel):
-    name: str = Field(description = "The name of the chat")
-    owner_id: int = Field(description = "The chat owner's id")
+    name: str = Field(description="The name of the chat")
+    owner_id: int = Field(description="The chat owner's id")
+
 
 class ChatUpdate(ChatCreate):
     name: str = Field(
