@@ -5,8 +5,10 @@ Database functionality for chat memberships table
 
 from collections.abc import Sequence
 from typing import Literal
-from sqlmodel import Session, select
-from app.database.schema import Account, ChatMembership, Chat
+from sqlmodel import Session, select, update
+from app.database.schema import Account, ChatMembership, Chat, Message
+from app.database.accounts import find as find_account
+from app.exceptions import EntityNotFoundException, BadRequestException
 
 
 # Retrieve **accounts that belong to a specific chat**
@@ -36,3 +38,79 @@ def get_accounts_by_chat_id(
 
     results = session.exec(stmt)
     return results.all()
+
+
+def create(session: Session, account_id: int, chat_id: int) -> ChatMembership:
+    """Add new ChatMembership to database
+
+    Args:
+        session (Session): DB Session
+        account_id (int): id of account
+        chat_id (int): id of chat
+
+    Return:
+        ChatMembership
+
+    Raises:
+        EntityNotFoundException if chat or account not found
+    """
+    from app.database.chats import find as find_chat
+
+    find_account(session, account_id)
+    find_chat(session, chat_id)
+
+    membership = ChatMembership(account_id=account_id, chat_id=chat_id)
+    session.add(membership)
+    session.commit()
+    session.refresh(membership)
+    return membership
+
+
+def delete(session: Session, account_id: int, chat_id: int) -> None:
+    """Remove a chat membership from the database
+
+    Args:
+        session (Session): DB Session
+        account_id (int): id of account
+        chat_id (int): id of chat
+
+    Return:
+        None
+
+    Raises:
+        EntityNotFoundException: if chat or account not found, or membership doesn't exist
+        BadRequestException: if account is the owner of the chat
+    """
+    from app.database.chats import find as find_chat
+
+    # verify existence
+    find_account(session, account_id)
+    chat = find_chat(session, chat_id)
+
+    # owner can't delete membership
+    if chat.owner_id == account_id:
+        raise BadRequestException(
+            error="forbidden_operation",
+            message=f"Account with id {account_id} is the owner of chat {chat_id} and cannot delete their membership",
+        )
+
+    # find membership
+    stmt = select(ChatMembership).where(
+        ChatMembership.account_id == account_id, ChatMembership.chat_id == chat_id
+    )
+    membership = session.exec(stmt).first()
+
+    if membership is None:
+        raise EntityNotFoundException("chatmembership", account_id)
+
+    # update all messages authored by account to be null
+    update_stmt = (
+        update(Message)
+        .where(Message.account_id == account_id, Message.chat_id == chat_id)
+        .values(account_id=None)
+    )
+    session.exec(update_stmt)
+
+    # delete the membership
+    session.delete(membership)
+    session.commit()

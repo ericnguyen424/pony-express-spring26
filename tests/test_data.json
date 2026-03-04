@@ -1,0 +1,36 @@
+{
+  "accounts": [
+    {"id": 1, "username": "terminator", "email": "t-800@skynet.com", "hashed_password": "hashed1"},
+    {"id": 2, "username": "bishop", "email": "bishop@weyland.com", "hashed_password": "hashed2"},
+    {"id": 3, "username": "ripley", "email": "ripley@nostromo.com", "hashed_password": "hashed3"},
+    {"id": 4, "username": "newt", "email": "newt@nostromo.com", "hashed_password": "hashed4"},
+    {"id": 5, "username": "vasquez", "email": "vasquez@uscm.mil", "hashed_password": "hashed5"},
+    {"id": 6, "username": "hicks", "email": "hicks@uscm.mil", "hashed_password": "hashed6"},
+    {"id": 7, "username": "gorman", "email": "gorman@uscm.mil", "hashed_password": "hashed7"},
+    {"id": 8, "username": "hudson", "email": "hudson@uscm.mil", "hashed_password": "hashed8"},
+    {"id": 9, "username": "drake", "email": "drake@uscm.mil", "hashed_password": "hashed9"},
+    {"id": 10, "username": "apone", "email": "apone@uscm.mil", "hashed_password": "hashed10"},
+    {"id": 11, "username": "wierzbowski", "email": "wierzbowski@uscm.mil", "hashed_password": "hashed11"}
+  ],
+  "chats": [
+    {"id": 1, "name": "skynet", "owner_id": 1},
+    {"id": 2, "name": "weyland", "owner_id": 2},
+    {"id": 3, "name": "nostromo", "owner_id": 3},
+    {"id": 4, "name": "newt", "owner_id": 8},
+    {"id": 5, "name": "terminators", "owner_id": 5},
+    {"id": 6, "name": "sensory apparatus", "owner_id": 5}
+  ],
+  "chat_memberships": [
+    {"chat_id": 1, "account_id": 1},
+    {"chat_id": 1, "account_id": 2},
+    {"chat_id": 1, "account_id": 3},
+    {"chat_id": 3, "account_id": 2},
+    {"chat_id": 3, "account_id": 3},
+    {"chat_id": 3, "account_id": 8}
+  ],
+  "messages": [
+    {"id": 1, "chat_id": 1, "account_id": 1, "text": "This T-1000... what happens when you shoot it?", "owner_id": 1, "created_at": "2025-08-20 10:20:21.123456"},
+    {"id": 2, "chat_id": 1, "account_id": 2, "text": "Standard hyperalloy combat chassis.", "owner_id": 2, "created_at": "2025-08-20 10:21:21.123456"},
+    {"id": 3, "chat_id": 1, "account_id": 3, "text": "We need to find the queen.", "owner_id": 3, "created_at": "2025-08-20 10:22:21.123456"}
+  ]
+}
