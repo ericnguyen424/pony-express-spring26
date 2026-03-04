@@ -139,6 +139,10 @@ def test_get_chat_valid_id_2(test_client):
 def test_get_chat_invalid_id(test_client):
     response = test_client.get("/chats/999")
     assert response.status_code == 404
+    assert response.json() == {
+        "error": "entity_not_found",
+        "message": "Not found: chat with id=999",
+    }
 
 
 # @chat_router.get("/{chat_id}/accounts")
@@ -176,6 +180,10 @@ def test_get_chat_accounts_sorted_by_name(test_client):
 def test_get_chat_accounts_invalid_id(test_client):
     response = test_client.get("/chats/999/accounts?sort=username")
     assert response.status_code == 404
+    assert response.json() == {
+        "error": "entity_not_found",
+        "message": "Not found: chat with id=999",
+    }
 
 
 # @chat_router.get("/{chat_id}/messages")
@@ -220,6 +228,10 @@ def test_get_messages_invalid_id():
 
     response = test_client.get("/chats/999/messages")
     assert response.status_code == 404
+    assert response.json() == {
+        "error": "entity_not_found",
+        "message": "Not found: chat with id=999",
+    }
 
 
 # @chat_router.post("")
@@ -247,11 +259,15 @@ def test_create_chat_invalid_owner(test_client_json):
 
 
 def test_create_chat_duplicate_name(test_client_json):
-    """Test creating a chat with duplicate name raises 409"""
+    """Test creating a chat with duplicate name raises 422"""
     chat_data = {"name": "skynet", "owner_id": 1}
     response = test_client_json.post("/chats", json=chat_data)
 
-    assert response.status_code == 409
+    assert response.status_code == 422
+    assert response.json() == {
+        "error": "value_not_allowed",
+        "message": "Not allowed: chat with name=skynet",
+    }
 
 
 # @chat_router.put("/{chat_id}")
@@ -277,15 +293,23 @@ def test_update_chat_invalid_id(test_client_json):
     response = test_client_json.put("/chats/999", json=update_data)
 
     assert response.status_code == 404
+    assert response.json() == {
+        "error": "entity_not_found",
+        "message": "Not found: chat with id=999",
+    }
 
 
 def test_update_chat_invalid_owner(test_client_json):
-    """Test updating chat with non-existent owner raises 404"""
+    """Test updating chat with non-existent owner raises 422"""
     chat_id = 1
     update_data = {"name": "test", "owner_id": 999}
     response = test_client_json.put(f"/chats/{chat_id}", json=update_data)
 
-    assert response.status_code == 404
+    assert response.status_code == 422
+    assert response.json() == {
+        "error": "chat_membership_required",
+        "message": "Chat membership required: account with id=999 must be a member of chat with id=1",
+    }
 
 
 # @chat_router.delete("/{chat_id}")
@@ -304,6 +328,10 @@ def test_delete_chat_invalid_id(test_client_json):
     response = test_client_json.delete("/chats/999")
 
     assert response.status_code == 404
+    assert response.json() == {
+        "error": "entity_not_found",
+        "message": "Not found: chat with id=999",
+    }
 
 
 def test_delete_chat_verify_deletion(test_client_json):
@@ -317,6 +345,10 @@ def test_delete_chat_verify_deletion(test_client_json):
     # Try to get the deleted chat
     response = test_client_json.get(f"/chats/{chat_id}")
     assert response.status_code == 404
+    assert response.json() == {
+        "error": "entity_not_found",
+        "message": f"Not found: chat with id={chat_id}",
+    }
 
 
 # @chat_router.post("/{chat_id}/messages")
@@ -382,6 +414,10 @@ def test_create_message_invalid_chat(test_client_json):
     response = test_client_json.post(f"/chats/{chat_id}/messages", json=message_data)
 
     assert response.status_code == 404
+    assert response.json() == {
+        "error": "entity_not_found",
+        "message": "Not found: chat with id=999",
+    }
 
 
 def test_create_message_unauthorized(test_client_json):
@@ -509,6 +545,10 @@ def test_add_account_to_chat_invalid_chat(test_client_json):
     response = test_client_json.put(f"/chats/{chat_id}/accounts?account_id={account_id}")
 
     assert response.status_code == 404
+    assert response.json() == {
+        "error": "entity_not_found",
+        "message": "Not found: chat with id=999",
+    }
 
 
 def test_add_account_to_chat_verify_added(test_client_json):
