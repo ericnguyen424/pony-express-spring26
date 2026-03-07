@@ -3,7 +3,7 @@ from typing import Literal
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 
-from app.models.accounts import Account, AccountCollection
+from app.models.accounts import Account, AccountCollection, AccountCreate, AccountUpdate
 from app.models.shared import CollectionMetadata
 
 # Database Imports
@@ -37,4 +37,11 @@ def get_account(session: DBSession, account_id: int) -> Account:
     """Retrieve an account matching a given account_id. Returns 404 if not found."""
 
     db_account = accounts_db.find(session, account_id)
+    return Account(**db_account.model_dump(exclude={"hashed_password"}))
+
+@accounts_router.post("", response_model=Account, status_code=201)
+def create_account(session: DBSession, create: AccountCreate) -> Account:
+    """Add a new account"""
+
+    db_account = accounts_db.create(session, create)
     return Account(**db_account.model_dump(exclude={"hashed_password"}))

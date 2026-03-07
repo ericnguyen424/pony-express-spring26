@@ -80,3 +80,11 @@ class ChatNameNotAllowedException(BadRequestException):
             error="value_not_allowed",
             message=f"Not allowed: chat with name={name}",
         )
+
+class AccountUnproccessableContentException(BadRequestException):
+    def __init(self, name: str, param: str, value: str):
+        super().__init__(
+            status_code=422,
+            error = "value_not_allowed",
+            message = "Not allowed: account with {param}={value}}"
+        )
