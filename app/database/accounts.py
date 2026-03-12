@@ -158,17 +158,19 @@ def update(session: Session, account_id: int, update: AccountUpdate) -> Account:
 
     account = find(session, account_id)
     
-    if (account.username != update.username):
-        if (find_by_username(update.username) is not None):
+    if update.username is not None and account.username != update.username:
+        existing_username = find_by_username(session, update.username)
+        if existing_username is not None and existing_username.id != account.id:
             raise AccountUnproccessableContentException("username", update.username)
         account.username = update.username
 
-    if (account.email != update.email):
-        if (find_by_email(update.email) is not None):
-            raise AccountUnproccessableContentException("email", update.email)
-        account.email = update.email
+    if update.email is not None and account.email != update.email:
+        existing_email = find_by_email(session, str(update.email))
+        if existing_email is not None and existing_email.id != account.id:
+            raise AccountUnproccessableContentException("email", str(update.email))
+        account.email = str(update.email)
 
-    if (hash(update.password) != get_hashed_password(account_id)):
+    if update.password is not None and not verify(update.password, account.hashed_password):
         account.hashed_password = hash(update.password)
     
     session.add(account)
@@ -192,10 +194,10 @@ def update_password(session: Session, account_id: int, update: AccountUpdate) ->
     """
 
     account = find(session, account_id)
-    
-    if (hash(update.password) != get_hashed_password(account_id)):
+
+    if update.password is not None and not verify(update.password, account.hashed_password):
         account.hashed_password = hash(update.password)
-    
+
     session.add(account)
     session.commit()
     session.refresh(account)

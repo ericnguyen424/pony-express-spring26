@@ -88,3 +88,11 @@ class AccountUnproccessableContentException(BadRequestException):
             error = "value_not_allowed",
             message = "Not allowed: account with {param}={value}}"
         )
+
+class UnauthorizedAccessException(BadRequestException):
+    def __init(self, name: str, param: str, value: str):
+        super().__init__(
+            status_code=401,
+            error = "invalid_credentials",
+            message = "Invalid credentials: invalid combination username and password"
+        )

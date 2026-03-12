@@ -1,17 +1,66 @@
+import os
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.exceptions import HTTPException
+from jose import JWTError, jwt
 
-from app.models.accounts import Account, AccountCollection, AccountCreate, AccountUpdate
+from app.models.accounts import (
+    Account,
+    AccountCollection,
+    AccountCreate,
+    AccountUpdate,
+    AuthenticatedAccount,
+)
 from app.models.shared import CollectionMetadata
 
 # Database Imports
 from app.database import accounts as accounts_db
 from app.database.schema import Account as DBAccount
 from app.dependencies import DBSession
+from app.exceptions import UnauthorizedException
 
 accounts_router = APIRouter(prefix="/accounts", tags=["Accounts"])
+
+JWT_ALGORITHM = "HS256"
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
+
+
+def _get_request_access_token(request: Request) -> str | None:
+    """Get access token from cookie or bearer authorization header."""
+
+    cookie_token = request.cookies.get("pony_express_token")
+    if cookie_token:
+        return cookie_token
+
+    authorization = request.headers.get("Authorization")
+    if authorization and authorization.startswith("Bearer "):
+        return authorization.removeprefix("Bearer ").strip()
+
+    return None
+
+
+def _get_authenticated_account(session: DBSession, request: Request) -> DBAccount:
+    """Authenticate request and return account from token claims."""
+
+    token = _get_request_access_token(request)
+    if token is None:
+        raise UnauthorizedException()
+
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+    except JWTError as e:
+        raise UnauthorizedException() from e
+
+    account_id = payload.get("account_id")
+    if not isinstance(account_id, int):
+        raise UnauthorizedException()
+
+    account = accounts_db.get_account(session, account_id)
+    if account is None:
+        raise UnauthorizedException()
+
+    return account
 
 
 @accounts_router.get("")
@@ -29,6 +78,36 @@ def get_accounts(
     return AccountCollection(
         metadata=CollectionMetadata(count=len(accounts), sort=sort),
         accounts=accounts,
+    )
+
+
+@accounts_router.get("/me", response_model=AuthenticatedAccount)
+def get_current_account(session: DBSession, request: Request) -> AuthenticatedAccount:
+    """Retrieve authenticated account details."""
+
+    db_account = _get_authenticated_account(session, request)
+    return AuthenticatedAccount(
+        id=db_account.id,
+        username=db_account.username,
+        email=db_account.email,
+    )
+
+
+@accounts_router.patch("/me", response_model=AuthenticatedAccount)
+def update_current_account(
+    session: DBSession,
+    request: Request,
+    update: AccountUpdate,
+) -> AuthenticatedAccount:
+    """Update authenticated account username and/or email."""
+
+    db_account = _get_authenticated_account(session, request)
+    updated_account = accounts_db.update(session, db_account.id, update)
+
+    return AuthenticatedAccount(
+        id=updated_account.id,
+        username=updated_account.username,
+        email=updated_account.email,
     )
 
 
