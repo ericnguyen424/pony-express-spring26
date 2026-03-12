@@ -34,3 +34,36 @@ def test_db_get_account_valid_id(session: Session):
 def test_db_get_account_invalid_id(session: Session):
     account = db_accounts.get_account(session, 999)
     assert account is None
+
+def test_db_create_account(session: Session, test_account_id:int):
+    # Create an account with username John, email: johndoe@gmail.com, random pass
+        # validate it exists
+    
+    # Create an account with username John, email: ericdoe@gmail.com, random pass
+        # expect an error 422 
+    
+    # Create an account with username Eric, email: johndoe@gmail.com, random pass
+        # expect an error 422
+
+def test_db_update_account(session: Session):
+    # Create 2 accounts
+        # user A: Eric - erictest@gmail.com
+        # user B: Victor - victortest@gmail.com
+
+    # change A's username to Victor - expect 422, unchanged account
+    # change A's email to victortest@gmail.com - expect 422, unchanged account
+
+    # change A's email to randomtest@gmail.com - expect change
+    # change B's email to erictest@gmail.com, username to Gustavo - expect change
+
+    # change A's username to Victor - expect change
+
+def test_db_delete_account(session: Session):
+    # create accounts A, B
+    # make B owner of multiple chats
+
+    # delete A, check for expected behavior
+    # delete B, expect 422 error
+    # delete all of B's chats, then delete B, check for expected behavior
+
+    

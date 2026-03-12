@@ -50,3 +50,49 @@ class UnauthorizedException(BadRequestException):
         super().__init__(
             status_code=401, error="unauthorized", message="You shall not pass!"
         )
+
+
+class ChatNotFoundException(BadRequestException):
+    def __init__(self, chat_id: int):
+        super().__init__(
+            status_code=404,
+            error="entity_not_found",
+            message=f"Not found: chat with id={chat_id}",
+        )
+
+
+class ChatMembershipRequiredException(BadRequestException):
+    def __init__(self, account_id: int, chat_id: int):
+        super().__init__(
+            status_code=422,
+            error="chat_membership_required",
+            message=(
+                "Chat membership required: account with id="
+                f"{account_id} must be a member of chat with id={chat_id}"
+            ),
+        )
+
+
+class ChatNameNotAllowedException(BadRequestException):
+    def __init__(self, name: str):
+        super().__init__(
+            status_code=422,
+            error="value_not_allowed",
+            message=f"Not allowed: chat with name={name}",
+        )
+
+class AccountUnproccessableContentException(BadRequestException):
+    def __init(self, name: str, param: str, value: str):
+        super().__init__(
+            status_code=422,
+            error = "value_not_allowed",
+            message = "Not allowed: account with {param}={value}}"
+        )
+
+class UnauthorizedAccessException(BadRequestException):
+    def __init(self, name: str, param: str, value: str):
+        super().__init__(
+            status_code=401,
+            error = "invalid_credentials",
+            message = "Invalid credentials: invalid combination username and password"
+        )

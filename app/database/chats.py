@@ -10,8 +10,9 @@ from app.database.schema import Account, Chat, ChatMembership
 from app.models.chats import ChatCreate, ChatUpdate
 from app.exceptions import (
     EntityNotFoundException,
-    NonUniqueException,
-    BadRequestException,
+    ChatNotFoundException,
+    ChatMembershipRequiredException,
+    ChatNameNotAllowedException,
 )
 from app.database.accounts import find as find_account
 from app.database.memberships import create as create_membership
@@ -66,7 +67,7 @@ def find(session: Session, chat_id: int) -> Chat:
 
     chat = get_chat(session, chat_id)
     if chat is None:
-        raise EntityNotFoundException("chat", chat_id)
+        raise ChatNotFoundException(chat_id)
     return chat
 
 
@@ -88,7 +89,7 @@ def create(session: Session, create: ChatCreate) -> Chat:
     # Raise exception if account_id doesn't exist or chat_name already exists
     find_account(session, create.owner_id)
     if does_chat_name_exist(session, create.name):
-        raise NonUniqueException("Chat", create.name)
+        raise ChatNameNotAllowedException(create.name)
 
     chat = Chat(**create.model_dump())
     session.add(chat)
@@ -117,17 +118,18 @@ def update(session: Session, chat_id: int, update: ChatUpdate) -> Chat:
 
     """
 
-    find_account(session, update.owner_id)
     chat = find(session, chat_id)
 
-    if does_chat_name_exist(session, update.name):
-        raise NonUniqueException("Chat", update.name)
+    try:
+        find_account(session, update.owner_id)
+    except EntityNotFoundException:
+        raise ChatMembershipRequiredException(update.owner_id, chat_id) from None
+
+    if does_chat_name_exist_excluding(session, update.name, chat_id):
+        raise ChatNameNotAllowedException(update.name)
 
     if is_account_in_chat(session, update.owner_id, chat_id) is False:
-        raise BadRequestException(
-            error="invalid_parameter",
-            message=f"Owner with id {update.owner_id} is not a member of chat with id {chat_id}",
-        )
+        raise ChatMembershipRequiredException(update.owner_id, chat_id)
 
     chat.name = update.name
     chat.owner_id = update.owner_id
@@ -160,6 +162,11 @@ def delete(session: Session, chat_id: int) -> None:
 # queries the database to check if a chat name already exists
 def does_chat_name_exist(session: Session, name: str) -> bool:
     stmt = select(Chat).where(Chat.name == name)
+    return session.exec(stmt).first() is not None
+
+
+def does_chat_name_exist_excluding(session: Session, name: str, chat_id: int) -> bool:
+    stmt = select(Chat).where(Chat.name == name, Chat.id != chat_id)
     return session.exec(stmt).first() is not None
 
 
