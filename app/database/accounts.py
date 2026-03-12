@@ -6,8 +6,12 @@ Database functionality for accounts table
 from collections.abc import Sequence
 from typing import Literal
 from sqlmodel import Session, select
-from app.database.schema import Account
-from app.exceptions import EntityNotFoundException, AccountUnproccessableContentException
+from app.database.schema import Account, Chat
+from app.exceptions import (
+    AccountUnproccessableContentException,
+    BadRequestException,
+    EntityNotFoundException,
+)
 from app.models.accounts import AccountCreate, AccountUpdate
 from app.auth import hash, verify
 
@@ -178,25 +182,39 @@ def update(session: Session, account_id: int, update: AccountUpdate) -> Account:
     session.refresh(account)
     return account
 
-def update_password(session: Session, account_id: int, update: AccountUpdate) -> Account:
-    """Update an account in the database
+def update_password(
+    session: Session,
+    account_id: int,
+    old_password: str,
+    new_password: str,
+) -> Account:
+    """Update account password in the database.
 
     Args:
-        session(Session): the database session
-        account_id: id of account to update
-        update: params of updated account
+        session (Session): the database session
+        account_id (int): id of account to update
+        old_password (str): existing password for verification
+        new_password (str): desired replacement password
 
     Returns:
         Updated account
 
     Raises:
-        EntityNotFoundException - account_id doesn't exist
+        EntityNotFoundException: account_id doesn't exist
+        BadRequestException: old password is incorrect
     """
 
     account = find(session, account_id)
 
-    if update.password is not None and not verify(update.password, account.hashed_password):
-        account.hashed_password = hash(update.password)
+    if not verify(old_password, account.hashed_password):
+        raise BadRequestException(
+            status_code=401,
+            error="invalid_credentials",
+            message="Invalid credentials: invalid combination username and password",
+        )
+
+    if not verify(new_password, account.hashed_password):
+        account.hashed_password = hash(new_password)
 
     session.add(account)
     session.commit()
@@ -218,9 +236,16 @@ def delete_account(session: Session, account_id: int):
         UnprocessableException if account 
     """
     account = find(session, account_id)
+
+    owns_chat = session.exec(
+        select(Chat).where(Chat.owner_id == account_id)
+    ).first()
+    if owns_chat is not None:
+        raise BadRequestException(
+            status_code=422,
+            error="action_not_allowed",
+            message="Action not allowed: deletion of chat owner",
+        )
+
     session.delete(account)
     session.commit()
-
-    #TODO: add a function to check if the user is the owner of any chats, 
-    # then call it in this function
-    # If user is owner of a chat, throw 422 UnprocessableContent with "Action not allowed: deletion of chat owner"

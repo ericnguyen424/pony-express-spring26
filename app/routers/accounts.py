@@ -1,7 +1,7 @@
 import os
 from typing import Literal
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Form, Request, Response, status
 from fastapi.exceptions import HTTPException
 from jose import JWTError, jwt
 
@@ -109,6 +109,41 @@ def update_current_account(
         username=updated_account.username,
         email=updated_account.email,
     )
+
+
+@accounts_router.put("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+def update_current_account_password(
+    session: DBSession,
+    request: Request,
+    old_password: str = Form(...),
+    new_password: str = Form(...),
+) -> Response:
+    """Update authenticated account password."""
+
+    db_account = _get_authenticated_account(session, request)
+    _ = accounts_db.update_password(
+        session,
+        db_account.id,
+        old_password,
+        new_password,
+    )
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@accounts_router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_current_account(
+    session: DBSession,
+    request: Request,
+    response: Response,
+) -> Response:
+    """Delete authenticated account and clear auth cookie."""
+
+    db_account = _get_authenticated_account(session, request)
+    accounts_db.delete_account(session, db_account.id)
+    response.delete_cookie(key="pony_express_token")
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
 
 @accounts_router.get("/{account_id}", response_model=Account)
