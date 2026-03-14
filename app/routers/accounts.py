@@ -2,8 +2,7 @@ import os
 from typing import Literal
 
 from fastapi import APIRouter, Request
-from fastapi.exceptions import HTTPException
-from jose import JWTError, jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 
 from app.models.accounts import (
     Account,
@@ -18,12 +17,16 @@ from app.models.shared import CollectionMetadata
 from app.database import accounts as accounts_db
 from app.database.schema import Account as DBAccount
 from app.dependencies import DBSession
-from app.exceptions import UnauthorizedException
+from app.exceptions import NotAuthenticatedException
 
 accounts_router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
 JWT_ALGORITHM = "HS256"
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
+JWT_SECRET_KEY = os.environ.get(
+    "PONY_EXPRESS_JWT_SECRET_KEY",
+    default="pony-express-dev-secret-key",
+)
+JWT_ISSUER = "http://127.0.0.1"
 
 
 def _get_request_access_token(request: Request) -> str | None:
@@ -45,20 +48,27 @@ def _get_authenticated_account(session: DBSession, request: Request) -> DBAccoun
 
     token = _get_request_access_token(request)
     if token is None:
-        raise UnauthorizedException()
+        raise NotAuthenticatedException("not_provided")
 
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+    except ExpiredSignatureError as e:
+        raise NotAuthenticatedException("expired") from e
     except JWTError as e:
-        raise UnauthorizedException() from e
+        raise NotAuthenticatedException("invalid") from e
 
-    account_id = payload.get("account_id")
-    if not isinstance(account_id, int):
-        raise UnauthorizedException()
+    if payload.get("iss") != JWT_ISSUER:
+        raise NotAuthenticatedException("invalid")
+
+    account_id_str = payload.get("sub")
+    if not isinstance(account_id_str, str) or not account_id_str.isdigit():
+        raise NotAuthenticatedException("invalid")
+
+    account_id = int(account_id_str)
 
     account = accounts_db.get_account(session, account_id)
     if account is None:
-        raise UnauthorizedException()
+        raise NotAuthenticatedException("invalid")
 
     return account
 

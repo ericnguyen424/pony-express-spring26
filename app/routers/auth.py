@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import os
 
 import bcrypt
@@ -16,8 +16,12 @@ from app.models.accounts import Account, AccountCreate
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 
 JWT_ALGORITHM = "HS256"
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+JWT_SECRET_KEY = os.environ.get(
+	"PONY_EXPRESS_JWT_SECRET_KEY",
+	default="pony-express-dev-secret-key",
+)
+JWT_ISSUER = "http://127.0.0.1"
+ACCESS_TOKEN_EXPIRE_SECONDS = 3600
 
 
 def _is_bcrypt_hash(hashed_password: str) -> bool:
@@ -70,15 +74,15 @@ def _authenticate_account(
 def _create_access_token(account: DBAccount) -> str:
 	"""Create an access token for an authenticated account."""
 
-	expires_at = datetime.now(timezone.utc) + timedelta(
-		minutes=ACCESS_TOKEN_EXPIRE_MINUTES,
-	)
+	issued_at = int(datetime.now(timezone.utc).timestamp())
+	expires_at = issued_at + ACCESS_TOKEN_EXPIRE_SECONDS
 
 	return jwt.encode(
 		{
-			"sub": account.username,
-			"account_id": account.id,
-			"exp": int(expires_at.timestamp()),
+			"sub": str(account.id),
+			"iss": JWT_ISSUER,
+			"iat": issued_at,
+			"exp": expires_at,
 		},
 		JWT_SECRET_KEY,
 		algorithm=JWT_ALGORITHM,

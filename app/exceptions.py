@@ -1,5 +1,6 @@
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from typing import Literal
 
 
 # bad request entity
@@ -95,4 +96,18 @@ class UnauthorizedAccessException(BadRequestException):
             status_code=401,
             error = "invalid_credentials",
             message = "Invalid credentials: invalid combination username and password"
+        )
+
+
+class NotAuthenticatedException(BadRequestException):
+    def __init__(self, reason: Literal["not_provided", "expired", "invalid"]):
+        message_by_reason = {
+            "not_provided": "Not authenticated: access token not provided",
+            "expired": "Not authenticated: access token expired",
+            "invalid": "Not authenticated: access token invalid",
+        }
+        super().__init__(
+            status_code=403,
+            error="not_authenticated",
+            message=message_by_reason[reason],
         )
