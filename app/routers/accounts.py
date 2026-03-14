@@ -1,9 +1,11 @@
 import os
+
 from typing import Literal
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Form, Request, Response, status
 from jose import ExpiredSignatureError, JWTError, jwt
 
+from app.auth import verify_with_legacy_support
 from app.models.accounts import (
     Account,
     AccountCollection,
@@ -17,7 +19,7 @@ from app.models.shared import CollectionMetadata
 from app.database import accounts as accounts_db
 from app.database.schema import Account as DBAccount
 from app.dependencies import DBSession
-from app.exceptions import NotAuthenticatedException
+from app.exceptions import NotAuthenticatedException, UnauthorizedAccessException
 
 accounts_router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
@@ -73,6 +75,13 @@ def _get_authenticated_account(session: DBSession, request: Request) -> DBAccoun
     return account
 
 
+def _delete_auth_cookie_if_present(request: Request, response: Response) -> None:
+    """Delete auth cookie when request includes it."""
+
+    if request.cookies.get("pony_express_token") is not None:
+        response.delete_cookie(key="pony_express_token")
+
+
 @accounts_router.get("")
 def get_accounts(
     session: DBSession, sort: Literal["id", "username"] = "id"
@@ -119,6 +128,44 @@ def update_current_account(
         username=updated_account.username,
         email=updated_account.email,
     )
+
+
+@accounts_router.put("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+def update_current_password(
+    session: DBSession,
+    request: Request,
+    old_password: str = Form(...),
+    new_password: str = Form(...),
+) -> Response:
+    """Update authenticated account password."""
+
+    db_account = _get_authenticated_account(session, request)
+
+    if not verify_with_legacy_support(old_password, db_account.hashed_password):
+        raise UnauthorizedAccessException()
+
+    accounts_db.update_password(
+        session,
+        db_account.id,
+        AccountUpdate(password=new_password),
+    )
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@accounts_router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_current_account(
+    session: DBSession,
+    request: Request,
+) -> Response:
+    """Delete authenticated account and clear cookie token when present."""
+
+    db_account = _get_authenticated_account(session, request)
+    accounts_db.delete_account(session, db_account.id)
+
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    _delete_auth_cookie_if_present(request, response)
+    return response
 
 
 @accounts_router.get("/{account_id}", response_model=Account)

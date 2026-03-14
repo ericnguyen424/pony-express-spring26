@@ -1,17 +1,16 @@
 from datetime import datetime, timezone
 import os
 
-import bcrypt
 from fastapi import APIRouter, Form, Response, status
 from jose import jwt
 from pydantic import EmailStr
 
-from app.auth import hash, verify
+from app.auth import hash, is_bcrypt_hash, verify, verify_with_legacy_support
 from app.database import accounts as accounts_db
 from app.dependencies import DBSession
 from app.database.schema import Account as DBAccount
 from app.exceptions import UnauthorizedAccessException
-from app.models.accounts import Account, AccountCreate
+from app.models.accounts import AccountCreate, AuthenticatedAccount
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -24,12 +23,6 @@ JWT_ISSUER = "http://127.0.0.1"
 ACCESS_TOKEN_EXPIRE_SECONDS = 3600
 
 
-def _is_bcrypt_hash(hashed_password: str) -> bool:
-	"""Return whether the given password hash is bcrypt formatted."""
-
-	return hashed_password.startswith(("$2a$", "$2b$", "$2y$"))
-
-
 def _upgrade_bcrypt_hash_if_needed(
 	session: DBSession,
 	account: DBAccount,
@@ -37,13 +30,10 @@ def _upgrade_bcrypt_hash_if_needed(
 ) -> None:
 	"""Upgrade bcrypt password hash to argon2 when credentials are valid."""
 
-	if not _is_bcrypt_hash(account.hashed_password):
+	if not is_bcrypt_hash(account.hashed_password):
 		return
 
-	if not bcrypt.checkpw(
-		password.encode("utf-8"),
-		account.hashed_password.encode("utf-8"),
-	):
+	if not verify_with_legacy_support(password, account.hashed_password):
 		raise UnauthorizedAccessException()
 
 	account.hashed_password = hash(password)
@@ -89,20 +79,24 @@ def _create_access_token(account: DBAccount) -> str:
 	)
 
 
-@auth_router.post("/registrations", response_model=Account, status_code=status.HTTP_201_CREATED)
+@auth_router.post(
+	"/registrations",
+	response_model=AuthenticatedAccount,
+	status_code=status.HTTP_201_CREATED,
+)
 def register_account(
 	session: DBSession,
 	username: str = Form(...),
 	email: EmailStr = Form(...),
 	password: str = Form(...),
-) -> Account:
+) -> AuthenticatedAccount:
 	"""Register a new account."""
     
 	created = accounts_db.create(
 		session,
 		AccountCreate(username=username, email=email, password=password),
 	)
-	return Account(**created.model_dump(exclude={"hashed_password"}))
+	return AuthenticatedAccount(**created.model_dump(exclude={"hashed_password"}))
 
 
 @auth_router.post("/tokens", status_code=status.HTTP_200_OK)

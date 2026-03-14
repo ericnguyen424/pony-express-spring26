@@ -82,20 +82,22 @@ class ChatNameNotAllowedException(BadRequestException):
             message=f"Not allowed: chat with name={name}",
         )
 
+
 class AccountUnproccessableContentException(BadRequestException):
-    def __init(self, name: str, param: str, value: str):
+    def __init__(self, param: str, value: str):
         super().__init__(
             status_code=422,
-            error = "value_not_allowed",
-            message = "Not allowed: account with {param}={value}}"
+            error="value_not_allowed",
+            message=f"Not allowed: account with {param}={value}",
         )
 
+
 class UnauthorizedAccessException(BadRequestException):
-    def __init(self, name: str, param: str, value: str):
+    def __init__(self):
         super().__init__(
             status_code=401,
-            error = "invalid_credentials",
-            message = "Invalid credentials: invalid combination username and password"
+            error="invalid_credentials",
+            message="Invalid credentials: invalid combination username and password",
         )
 
 
@@ -110,4 +112,13 @@ class NotAuthenticatedException(BadRequestException):
             status_code=403,
             error="not_authenticated",
             message=message_by_reason[reason],
+        )
+
+
+class ActionNotAllowedException(BadRequestException):
+    def __init__(self):
+        super().__init__(
+            status_code=422,
+            error="action_not_allowed",
+            message="Action not allowed: deletion of chat owner",
         )

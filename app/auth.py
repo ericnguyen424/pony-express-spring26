@@ -1,4 +1,6 @@
 import argon2
+import bcrypt
+from argon2.exceptions import VerifyMismatchError, VerificationError
 from pwdlib.hashers.argon2 import Argon2Hasher
 ARGON_HASHER = argon2.PasswordHasher()
 
@@ -21,5 +23,23 @@ def verify(password: str, hashed_password: str) -> bool:
     :return: True if the argon2 hash of password matches the hashed_password
     """
 
-    return ARGON_HASHER.verify(hashed_password, password)
+    try:
+        return ARGON_HASHER.verify(hashed_password, password)
+    except (VerifyMismatchError, VerificationError):
+        return False
+
+
+def is_bcrypt_hash(hashed_password: str) -> bool:
+    """Return whether the given hash is bcrypt formatted."""
+
+    return hashed_password.startswith(("$2a$", "$2b$", "$2y$"))
+
+
+def verify_with_legacy_support(password: str, hashed_password: str) -> bool:
+    """Verify password against argon2 hash with bcrypt backward compatibility."""
+
+    if is_bcrypt_hash(hashed_password):
+        return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+
+    return verify(password, hashed_password)
 
