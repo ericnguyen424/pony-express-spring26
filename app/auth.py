@@ -1,6 +1,6 @@
 import argon2
 import bcrypt
-from argon2.exceptions import VerifyMismatchError, VerificationError
+from argon2.exceptions import InvalidHashError, VerifyMismatchError, VerificationError
 
 ARGON_HASHER = argon2.PasswordHasher()
 
@@ -27,7 +27,7 @@ def verify(password: str, hashed_password: str) -> bool:
 
     try:
         return ARGON_HASHER.verify(hashed_password, password)
-    except (VerifyMismatchError, VerificationError):
+    except (VerifyMismatchError, VerificationError, InvalidHashError):
         return False
 
 
@@ -41,6 +41,9 @@ def verify_with_legacy_support(password: str, hashed_password: str) -> bool:
     """Verify password against argon2 hash with bcrypt backward compatibility."""
 
     if is_bcrypt_hash(hashed_password):
-        return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+        try:
+            return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+        except ValueError:
+            return False
 
     return verify(password, hashed_password)
