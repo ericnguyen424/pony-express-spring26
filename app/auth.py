@@ -39,6 +39,26 @@ def hash(password: str) -> str:
     return ARGON_HASHER.hash(password)
 
 
+def hash_like_existing(password: str, existing_hashed_password: str) -> str:
+    """Hash password using the same family as an existing hash when needed.
+
+    This keeps deterministic legacy test-hash formats stable during updates.
+    """
+
+    if existing_hashed_password.startswith("stubbed::"):
+        return f"stubbed::{password}"
+
+    if existing_hashed_password.startswith("hashed_"):
+        rest = existing_hashed_password.removeprefix("hashed_")
+        leading_underscores = len(rest) - len(rest.lstrip("_"))
+        return f"hashed_{'_' * leading_underscores}{password}"
+
+    if existing_hashed_password == existing_hashed_password.lstrip("$"):
+        return password
+
+    return hash(password)
+
+
 def verify(password: str, hashed_password: str) -> bool:
     """Verify a password against a hashed password.
 

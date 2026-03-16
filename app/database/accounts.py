@@ -188,7 +188,10 @@ def update(session: Session, account_id: int, update: AccountUpdate) -> Account:
     if update.password is not None and not auth.verify(
         update.password, account.hashed_password
     ):
-        account.hashed_password = auth.hash(update.password)
+        account.hashed_password = auth.hash_like_existing(
+            update.password,
+            account.hashed_password,
+        )
 
     session.add(account)
     session.commit()
@@ -220,7 +223,10 @@ def update_password(
     if update.password is not None and not auth.verify(
         update.password, account.hashed_password
     ):
-        account.hashed_password = auth.hash(update.password)
+        account.hashed_password = auth.hash_like_existing(
+            update.password,
+            account.hashed_password,
+        )
 
     session.add(account)
     session.commit()
