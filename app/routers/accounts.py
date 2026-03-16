@@ -76,7 +76,7 @@ def _get_authenticated_account(session: DBSession, request: Request) -> DBAccoun
 
 
 def _delete_auth_cookie_if_present(request: Request, response: Response) -> None:
-    """Delete auth cookie when request includes it."""
+    """Delete auth cookie from the response only when one is present on request."""
 
     if request.cookies.get("pony_express_token") is not None:
         response.delete_cookie(key="pony_express_token")
@@ -102,7 +102,7 @@ def get_accounts(
 
 @accounts_router.get("/me", response_model=AuthenticatedAccount)
 def get_current_account(session: DBSession, request: Request) -> AuthenticatedAccount:
-    """Retrieve authenticated account details."""
+    """Retrieve account details for the authenticated request token."""
 
     db_account = _get_authenticated_account(session, request)
     return AuthenticatedAccount(
@@ -118,7 +118,7 @@ def update_current_account(
     request: Request,
     update: AccountUpdate,
 ) -> AuthenticatedAccount:
-    """Update authenticated account username and/or email."""
+    """Update username and/or email for the authenticated account."""
 
     db_account = _get_authenticated_account(session, request)
     updated_account = accounts_db.update(session, db_account.id, update)
@@ -137,7 +137,7 @@ def update_current_password(
     old_password: str = Form(...),
     new_password: str = Form(...),
 ) -> Response:
-    """Update authenticated account password."""
+    """Update authenticated account password after validating old password."""
 
     db_account = _get_authenticated_account(session, request)
 
@@ -178,7 +178,7 @@ def get_account(session: DBSession, account_id: int) -> Account:
 
 @accounts_router.post("", response_model=Account, status_code=201)
 def create_account(session: DBSession, create: AccountCreate) -> Account:
-    """Add a new account"""
+    """Create a new account and return public account details."""
 
     db_account = accounts_db.create(session, create)
     return Account(**db_account.model_dump(exclude={"hashed_password"}))

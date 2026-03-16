@@ -90,7 +90,7 @@ def register_account(
     email: EmailStr = Form(...),
     password: str = Form(...),
 ) -> AuthenticatedAccount:
-    """Register a new account."""
+    """Register a new account and return authenticated account details."""
 
     created = accounts_db.create(
         session,
@@ -120,7 +120,7 @@ def login(
     username: str = Form(...),
     password: str = Form(...),
 ) -> Response:
-    """Authenticate credentials and set access token cookie."""
+    """Authenticate credentials and store an HTTP-only access token cookie."""
 
     account = _authenticate_account(session, username, password)
     access_token = _create_access_token(account)
@@ -136,7 +136,7 @@ def login(
 
 @auth_router.delete("/logins", status_code=status.HTTP_204_NO_CONTENT)
 def logout(response: Response) -> Response:
-    """Delete auth cookie if present."""
+    """Clear the auth cookie and return no content."""
 
     response.delete_cookie(key="pony_express_token")
     response.status_code = status.HTTP_204_NO_CONTENT

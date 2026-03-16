@@ -161,16 +161,22 @@ def delete(session: Session, chat_id: int) -> None:
 
 # queries the database to check if a chat name already exists
 def does_chat_name_exist(session: Session, name: str) -> bool:
+    """Return whether any chat already uses the provided name."""
+
     stmt = select(Chat).where(Chat.name == name)
     return session.exec(stmt).first() is not None
 
 
 def does_chat_name_exist_excluding(session: Session, name: str, chat_id: int) -> bool:
+    """Return whether a different chat already uses the provided name."""
+
     stmt = select(Chat).where(Chat.name == name, Chat.id != chat_id)
     return session.exec(stmt).first() is not None
 
 
 def is_account_in_chat(session: Session, account_id: int, chat_id: int) -> bool:
+    """Return whether the given account currently has membership in the chat."""
+
     stmt = select(ChatMembership).where(
         ChatMembership.account_id == account_id, ChatMembership.chat_id == chat_id
     )

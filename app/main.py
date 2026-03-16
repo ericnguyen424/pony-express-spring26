@@ -41,4 +41,6 @@ def handle_bad_requests(
     _request: Request,
     exception: BadRequestException,
 ) -> JSONResponse:
+    """Convert custom bad request exceptions into JSON API responses."""
+
     return exception.response()
