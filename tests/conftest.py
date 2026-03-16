@@ -76,4 +76,3 @@ def stub_password_hashing(monkeypatch):
         accounts_router_module,
         {"verify_with_legacy_support": _verify_password_stub},
     )
-

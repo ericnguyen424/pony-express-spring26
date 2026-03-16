@@ -175,6 +175,7 @@ def get_account(session: DBSession, account_id: int) -> Account:
     db_account = accounts_db.find(session, account_id)
     return Account(**db_account.model_dump(exclude={"hashed_password"}))
 
+
 @accounts_router.post("", response_model=Account, status_code=201)
 def create_account(session: DBSession, create: AccountCreate) -> Account:
     """Add a new account"""

@@ -14,7 +14,6 @@ from app.dependencies import initialize_database
 from app.exceptions import BadRequestException
 
 
-
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Lifespan event for events to run on startup and shutdown."""

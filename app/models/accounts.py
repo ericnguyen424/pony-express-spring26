@@ -17,12 +17,11 @@ class AccountCollection(BaseModel):
     metadata: CollectionMetadata
     accounts: list[Account]
 
+
 class AccountCreate(BaseModel):
     username: str = Field(description="Account Username")
     password: str = Field(description="Account Password")
     email: EmailStr = Field(description="Account email")
-
-#TODO: need to add pydantic validation for email, password, and username 
 
 class AccountUpdate(BaseModel):
     username: str | None = Field(
@@ -37,6 +36,7 @@ class AccountUpdate(BaseModel):
         default=None,
         description="The updated password",
     )
+
 
 class PasswordUpdate(AccountCreate):
     password: str = Field(description="Updated password")

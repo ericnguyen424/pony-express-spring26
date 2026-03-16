@@ -1,7 +1,6 @@
 from typing import Literal
 
 from fastapi import APIRouter
-from fastapi.exceptions import HTTPException
 
 # Model Imports
 from app.models.chats import Chat, ChatCollection, ChatCreate, ChatUpdate
@@ -14,7 +13,6 @@ from app.database import chats as chats_db
 from app.database import memberships as memberships_db
 from app.database import messages as messages_db
 from app.dependencies import DBSession
-from app.database.schema import Chat as DBChat
 
 chat_router = APIRouter(prefix="/chats", tags=["Chats"])
 
