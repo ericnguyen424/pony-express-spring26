@@ -5,7 +5,7 @@ from typing import Literal
 from fastapi import APIRouter, Form, Request, Response, status
 from jose import ExpiredSignatureError, JWTError, jwt
 
-from app.auth import verify_with_legacy_support
+from app import auth
 from app.models.accounts import (
     Account,
     AccountCollection,
@@ -19,7 +19,11 @@ from app.models.shared import CollectionMetadata
 from app.database import accounts as accounts_db
 from app.database.schema import Account as DBAccount
 from app.dependencies import DBSession
-from app.exceptions import NotAuthenticatedException, UnauthorizedAccessException
+from app.exceptions import (
+    BadRequestException,
+    NotAuthenticatedException,
+    UnauthorizedAccessException,
+)
 
 accounts_router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
@@ -131,23 +135,56 @@ def update_current_account(
 
 
 @accounts_router.put("/me/password", status_code=status.HTTP_204_NO_CONTENT)
-def update_current_password(
+async def update_current_password(
     session: DBSession,
     request: Request,
-    old_password: str = Form(...),
-    new_password: str = Form(...),
+    old_password: str | None = Form(default=None),
+    new_password: str | None = Form(default=None),
 ) -> Response:
     """Update authenticated account password after validating old password."""
 
     db_account = _get_authenticated_account(session, request)
 
-    if not verify_with_legacy_support(old_password, db_account.hashed_password):
+    resolved_old_password = old_password
+    resolved_new_password = new_password
+    if resolved_old_password is None or resolved_new_password is None:
+        try:
+            payload = await request.json()
+        except Exception:
+            payload = {}
+
+        if isinstance(payload, dict):
+            resolved_old_password = (
+                resolved_old_password
+                if resolved_old_password is not None
+                else payload.get("old_password")
+            )
+            resolved_new_password = (
+                resolved_new_password
+                if resolved_new_password is not None
+                else payload.get("new_password")
+            )
+
+    if not isinstance(resolved_old_password, str) or not isinstance(
+        resolved_new_password,
+        str,
+    ):
+        raise BadRequestException(
+            status_code=422,
+            error="invalid_parameter",
+            message="Invalid parameter: old_password and new_password are required",
+        )
+
+    if not auth.verify_with_legacy_support(
+        resolved_old_password,
+        db_account.hashed_password,
+    ):
         raise UnauthorizedAccessException()
 
     accounts_db.update_password(
         session,
         db_account.id,
-        AccountUpdate(password=new_password),
+        AccountUpdate(password=resolved_new_password),
     )
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

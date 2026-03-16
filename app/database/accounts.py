@@ -13,7 +13,7 @@ from app.exceptions import (
     EntityNotFoundException,
 )
 from app.models.accounts import AccountCreate, AccountUpdate
-from app.auth import hash, verify
+from app import auth
 
 
 # Retrieve **all accounts**
@@ -139,7 +139,7 @@ def create(session: Session, create: AccountCreate) -> Account:
     account = Account(
         username=create.username,
         email=create.email,
-        hashed_password=hash(create.password),
+        hashed_password=auth.hash(create.password),
     )
 
     session.add(account)
@@ -185,10 +185,10 @@ def update(session: Session, account_id: int, update: AccountUpdate) -> Account:
             raise AccountUnproccessableContentException("email", str(update.email))
         account.email = str(update.email)
 
-    if update.password is not None and not verify(
+    if update.password is not None and not auth.verify(
         update.password, account.hashed_password
     ):
-        account.hashed_password = hash(update.password)
+        account.hashed_password = auth.hash(update.password)
 
     session.add(account)
     session.commit()
@@ -217,10 +217,10 @@ def update_password(
 
     account = find(session, account_id)
 
-    if update.password is not None and not verify(
+    if update.password is not None and not auth.verify(
         update.password, account.hashed_password
     ):
-        account.hashed_password = hash(update.password)
+        account.hashed_password = auth.hash(update.password)
 
     session.add(account)
     session.commit()
