@@ -84,7 +84,7 @@ def test_db_get_account_invalid_id(session: Session):
     account = db_accounts.get_account(session, 999)
     assert account is None
 
-def test_db_create_account(session_json: Session):
+def test_db_create_account(session_json: Session, stub_password_hashing):
     created = db_accounts.create(
         session_json,
         AccountCreate(
@@ -120,7 +120,7 @@ def test_db_create_account(session_json: Session):
         )
 
 
-def test_db_update_account(session_json: Session):
+def test_db_update_account(session_json: Session, stub_password_hashing):
     user_a = db_accounts.create(
         session_json,
         AccountCreate(
@@ -175,7 +175,7 @@ def test_db_update_account(session_json: Session):
     assert updated_a.username == "Victor"
 
 
-def test_db_delete_account(session_json: Session):
+def test_db_delete_account(session_json: Session, stub_password_hashing):
     user_a = db_accounts.create(
         session_json,
         AccountCreate(

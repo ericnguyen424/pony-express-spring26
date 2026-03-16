@@ -62,7 +62,11 @@ def test_client_json(session_json: Session) -> Generator[TestClient]:
   app.dependency_overrides.clear()
 
 
-def test_register_account(test_client_json: TestClient, session_json: Session):
+def test_register_account(
+  test_client_json: TestClient,
+  session_json: Session,
+  stub_password_hashing,
+):
   response = test_client_json.post(
     "/auth/registrations",
     data={
@@ -122,7 +126,11 @@ def test_register_account(test_client_json: TestClient, session_json: Session):
   assert "detail" in invalid_email.json()
 
 
-def test_create_token(test_client_json: TestClient, session_json: Session):
+def test_create_token(
+  test_client_json: TestClient,
+  session_json: Session,
+  stub_password_hashing,
+):
   accounts_db.create(
     session_json,
     AccountCreate(
@@ -141,26 +149,6 @@ def test_create_token(test_client_json: TestClient, session_json: Session):
   assert "access_token" in payload
   assert payload["access_token"]
   assert payload["token_type"] == "bearer"
-
-  bcrypt_hash = bcrypt.hashpw(b"bcrypt-pass", bcrypt.gensalt()).decode("utf-8")
-  bcrypt_account = Account(
-    username="bcrypt-user",
-    email="bcrypt-user@example.com",
-    hashed_password=bcrypt_hash,
-  )
-  session_json.add(bcrypt_account)
-  session_json.commit()
-  session_json.refresh(bcrypt_account)
-
-  upgrade_response = test_client_json.post(
-    "/auth/tokens",
-    data={"username": "bcrypt-user", "password": "bcrypt-pass"},
-  )
-  assert upgrade_response.status_code == 200
-
-  upgraded = accounts_db.find_by_username(session_json, "bcrypt-user")
-  assert upgraded is not None
-  assert upgraded.hashed_password.startswith("$argon2")
 
   invalid_username = test_client_json.post(
     "/auth/tokens",
@@ -183,7 +171,36 @@ def test_create_token(test_client_json: TestClient, session_json: Session):
   }
 
 
-def test_login(test_client_json: TestClient, session_json: Session):
+def test_create_token_upgrades_bcrypt_hash(
+  test_client_json: TestClient,
+  session_json: Session,
+):
+  bcrypt_hash = bcrypt.hashpw(b"bcrypt-pass", bcrypt.gensalt()).decode("utf-8")
+  bcrypt_account = Account(
+    username="bcrypt-user",
+    email="bcrypt-user@example.com",
+    hashed_password=bcrypt_hash,
+  )
+  session_json.add(bcrypt_account)
+  session_json.commit()
+  session_json.refresh(bcrypt_account)
+
+  upgrade_response = test_client_json.post(
+    "/auth/tokens",
+    data={"username": "bcrypt-user", "password": "bcrypt-pass"},
+  )
+  assert upgrade_response.status_code == 200
+
+  upgraded = accounts_db.find_by_username(session_json, "bcrypt-user")
+  assert upgraded is not None
+  assert upgraded.hashed_password.startswith("$argon2")
+
+
+def test_login(
+  test_client_json: TestClient,
+  session_json: Session,
+  stub_password_hashing,
+):
   accounts_db.create(
     session_json,
     AccountCreate(
@@ -207,26 +224,6 @@ def test_login(test_client_json: TestClient, session_json: Session):
   assert "pony_express_token=" in set_cookie_header
   assert "HttpOnly" in set_cookie_header
 
-  bcrypt_hash = bcrypt.hashpw(b"login-bcrypt-pass", bcrypt.gensalt()).decode("utf-8")
-  bcrypt_account = Account(
-    username="login-bcrypt-user",
-    email="login-bcrypt@example.com",
-    hashed_password=bcrypt_hash,
-  )
-  session_json.add(bcrypt_account)
-  session_json.commit()
-  session_json.refresh(bcrypt_account)
-
-  upgrade_response = test_client_json.post(
-    "/auth/logins",
-    data={"username": "login-bcrypt-user", "password": "login-bcrypt-pass"},
-  )
-  assert upgrade_response.status_code == 204
-
-  upgraded = accounts_db.find_by_username(session_json, "login-bcrypt-user")
-  assert upgraded is not None
-  assert upgraded.hashed_password.startswith("$argon2")
-
   invalid_username = test_client_json.post(
     "/auth/logins",
     data={"username": "does-not-exist", "password": "login-pass"},
@@ -248,7 +245,36 @@ def test_login(test_client_json: TestClient, session_json: Session):
   }
 
 
-def test_update_me_password_with_bearer_token(test_client_json: TestClient, session_json: Session):
+def test_login_upgrades_bcrypt_hash(
+  test_client_json: TestClient,
+  session_json: Session,
+):
+  bcrypt_hash = bcrypt.hashpw(b"login-bcrypt-pass", bcrypt.gensalt()).decode("utf-8")
+  bcrypt_account = Account(
+    username="login-bcrypt-user",
+    email="login-bcrypt@example.com",
+    hashed_password=bcrypt_hash,
+  )
+  session_json.add(bcrypt_account)
+  session_json.commit()
+  session_json.refresh(bcrypt_account)
+
+  upgrade_response = test_client_json.post(
+    "/auth/logins",
+    data={"username": "login-bcrypt-user", "password": "login-bcrypt-pass"},
+  )
+  assert upgrade_response.status_code == 204
+
+  upgraded = accounts_db.find_by_username(session_json, "login-bcrypt-user")
+  assert upgraded is not None
+  assert upgraded.hashed_password.startswith("$argon2")
+
+
+def test_update_me_password_with_bearer_token(
+  test_client_json: TestClient,
+  session_json: Session,
+  stub_password_hashing,
+):
   accounts_db.create(
     session_json,
     AccountCreate(
@@ -286,7 +312,11 @@ def test_update_me_password_with_bearer_token(test_client_json: TestClient, sess
   assert new_login.status_code == 200
 
 
-def test_update_me_password_with_cookie_token(test_client_json: TestClient, session_json: Session):
+def test_update_me_password_with_cookie_token(
+  test_client_json: TestClient,
+  session_json: Session,
+  stub_password_hashing,
+):
   accounts_db.create(
     session_json,
     AccountCreate(
@@ -316,7 +346,11 @@ def test_update_me_password_with_cookie_token(test_client_json: TestClient, sess
   assert new_login.status_code == 200
 
 
-def test_update_me_password_invalid_old_password(test_client_json: TestClient, session_json: Session):
+def test_update_me_password_invalid_old_password(
+  test_client_json: TestClient,
+  session_json: Session,
+  stub_password_hashing,
+):
   accounts_db.create(
     session_json,
     AccountCreate(
@@ -346,7 +380,11 @@ def test_update_me_password_invalid_old_password(test_client_json: TestClient, s
   }
 
 
-def test_delete_me_with_bearer_token(test_client_json: TestClient, session_json: Session):
+def test_delete_me_with_bearer_token(
+  test_client_json: TestClient,
+  session_json: Session,
+  stub_password_hashing,
+):
   owner = accounts_db.create(
     session_json,
     AccountCreate(
@@ -406,7 +444,11 @@ def test_delete_me_with_bearer_token(test_client_json: TestClient, session_json:
   assert updated_message.account_id is None
 
 
-def test_delete_me_with_cookie_token_deletes_cookie(test_client_json: TestClient, session_json: Session):
+def test_delete_me_with_cookie_token_deletes_cookie(
+  test_client_json: TestClient,
+  session_json: Session,
+  stub_password_hashing,
+):
   accounts_db.create(
     session_json,
     AccountCreate(
@@ -431,7 +473,11 @@ def test_delete_me_with_cookie_token_deletes_cookie(test_client_json: TestClient
   assert deleted_account is None
 
 
-def test_delete_me_owner_not_allowed(test_client_json: TestClient, session_json: Session):
+def test_delete_me_owner_not_allowed(
+  test_client_json: TestClient,
+  session_json: Session,
+  stub_password_hashing,
+):
   owner = accounts_db.create(
     session_json,
     AccountCreate(

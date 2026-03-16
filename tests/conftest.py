@@ -4,8 +4,33 @@ import pytest
 from sqlmodel import Session, SQLModel, StaticPool, create_engine
 from starlette.testclient import TestClient
 
+from app import auth as auth_module
+from app.database import accounts as accounts_db_module
 from app.dependencies import get_session
 from app.main import app
+from app.routers import accounts as accounts_router_module
+from app.routers import auth as auth_router_module
+
+
+def _hash_password_stub(password: str) -> str:
+    return f"stubbed::{password}"
+
+
+def _verify_password_stub(password: str, hashed_password: str) -> bool:
+    return hashed_password == _hash_password_stub(password)
+
+
+def _patch_attrs(monkeypatch, target, replacements: dict[str, object]) -> None:
+    for attr_name, replacement in replacements.items():
+        monkeypatch.setattr(target, attr_name, replacement)
+
+
+def _stubbed_auth_replacements() -> dict[str, object]:
+    return {
+        "hash": _hash_password_stub,
+        "verify": _verify_password_stub,
+        "verify_with_legacy_support": _verify_password_stub,
+    }
 
 
 @pytest.fixture
@@ -30,4 +55,25 @@ def test_client(session: Session) -> Generator[TestClient]:
 
     yield TestClient(app)
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def stub_password_hashing(monkeypatch):
+    auth_replacements = _stubbed_auth_replacements()
+
+    _patch_attrs(monkeypatch, auth_module, auth_replacements)
+    _patch_attrs(
+        monkeypatch,
+        accounts_db_module,
+        {
+            "hash": _hash_password_stub,
+            "verify": _verify_password_stub,
+        },
+    )
+    _patch_attrs(monkeypatch, auth_router_module, auth_replacements)
+    _patch_attrs(
+        monkeypatch,
+        accounts_router_module,
+        {"verify_with_legacy_support": _verify_password_stub},
+    )
 
