@@ -20,8 +20,11 @@ def _verify_test_hash_formats(password: str, hashed_password: str) -> bool:
     if hashed_password == f"stubbed::{password}":
         return True
 
-    if hashed_password == f"hashed__{password}":
-        return True
+    if hashed_password.startswith("hashed_"):
+        suffix = hashed_password.removeprefix("hashed_").lstrip("_")
+        if suffix == password:
+            return True
+        return False
 
     return False
 
