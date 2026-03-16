@@ -202,15 +202,17 @@ def update_password(
     """Update an account in the database
 
     Args:
-        session(Session): the database session
-        account_id: id of account to update
-        update: params of updated account
+        session (Session): the database session
+        account_id (int): id of account to update
+        old_password (str): existing password for verification
+        new_password (str): desired replacement password
 
     Returns:
         Updated account
 
     Raises:
-        EntityNotFoundException - account_id doesn't exist
+        EntityNotFoundException: account_id doesn't exist
+        BadRequestException: old password is incorrect
     """
 
     account = find(session, account_id)
