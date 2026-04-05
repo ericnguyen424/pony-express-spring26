@@ -1,5 +1,57 @@
+import json
+from collections.abc import Generator
+from datetime import datetime
+from pathlib import Path
+
+import pytest
 from sqlmodel import Session
+from sqlmodel import SQLModel, StaticPool, create_engine
+
 from app.database import accounts as db_accounts
+from app.database import chats as db_chats
+from app.database.schema import Account, Chat, ChatMembership, Message
+from app.exceptions import (
+    AccountUnproccessableContentException,
+    ActionNotAllowedException,
+)
+from app.models.accounts import AccountCreate, AccountUpdate
+from app.models.chats import ChatCreate
+
+
+@pytest.fixture
+def session_json() -> Generator[Session]:
+    """Isolated in-memory DB session loaded from tests/test_data.json."""
+
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    SQLModel.metadata.create_all(engine)
+
+    test_data_path = Path(__file__).parent.parent / "test_data.json"
+    with open(test_data_path) as f:
+        data = json.load(f)
+
+    with Session(engine) as session:
+        for account_data in data["accounts"]:
+            session.add(Account(**account_data))
+
+        for chat_data in data["chats"]:
+            session.add(Chat(**chat_data))
+
+        for membership_data in data["chat_memberships"]:
+            session.add(ChatMembership(**membership_data))
+
+        for message_data in data["messages"]:
+            if isinstance(message_data.get("created_at"), str):
+                message_data["created_at"] = datetime.strptime(
+                    message_data["created_at"], "%Y-%m-%d %H:%M:%S.%f"
+                )
+            session.add(Message(**message_data))
+
+        session.commit()
+        yield session
 
 
 def test_db_get_accounts_sorted_by_id(session: Session):
@@ -35,35 +87,260 @@ def test_db_get_account_invalid_id(session: Session):
     account = db_accounts.get_account(session, 999)
     assert account is None
 
-def test_db_create_account(session: Session, test_account_id:int):
-    # Create an account with username John, email: johndoe@gmail.com, random pass
-        # validate it exists
-    
-    # Create an account with username John, email: ericdoe@gmail.com, random pass
-        # expect an error 422 
-    
-    # Create an account with username Eric, email: johndoe@gmail.com, random pass
-        # expect an error 422
 
-def test_db_update_account(session: Session):
-    # Create 2 accounts
-        # user A: Eric - erictest@gmail.com
-        # user B: Victor - victortest@gmail.com
+def test_db_create_account(session_json: Session):
+    created = db_accounts.create(
+        session_json,
+        AccountCreate(
+            username="john",
+            email="johndoe@gmail.com",
+            password="random-pass-1",
+        ),
+    )
 
-    # change A's username to Victor - expect 422, unchanged account
-    # change A's email to victortest@gmail.com - expect 422, unchanged account
+    assert created.id is not None
+    assert created.hashed_password.startswith("$argon2")
+    fetched = db_accounts.find_by_username(session_json, "john")
+    assert fetched is not None
+    assert fetched.email == "johndoe@gmail.com"
+    assert fetched.hashed_password.startswith("$argon2")
 
-    # change A's email to randomtest@gmail.com - expect change
-    # change B's email to erictest@gmail.com, username to Gustavo - expect change
+    with pytest.raises(AccountUnproccessableContentException):
+        db_accounts.create(
+            session_json,
+            AccountCreate(
+                username="john",
+                email="ericdoe@gmail.com",
+                password="random-pass-2",
+            ),
+        )
 
-    # change A's username to Victor - expect change
+    with pytest.raises(AccountUnproccessableContentException):
+        db_accounts.create(
+            session_json,
+            AccountCreate(
+                username="eric",
+                email="johndoe@gmail.com",
+                password="random-pass-3",
+            ),
+        )
 
-def test_db_delete_account(session: Session):
-    # create accounts A, B
-    # make B owner of multiple chats
 
-    # delete A, check for expected behavior
-    # delete B, expect 422 error
-    # delete all of B's chats, then delete B, check for expected behavior
+def test_db_update_account(session_json: Session, stub_password_hashing):
+    user_a = db_accounts.create(
+        session_json,
+        AccountCreate(
+            username="Eric",
+            email="erictest@gmail.com",
+            password="random-pass-a",
+        ),
+    )
+    user_b = db_accounts.create(
+        session_json,
+        AccountCreate(
+            username="Victor",
+            email="victortest@gmail.com",
+            password="random-pass-b",
+        ),
+    )
 
-    
+    with pytest.raises(AccountUnproccessableContentException):
+        db_accounts.update(session_json, user_a.id, AccountUpdate(username="Victor"))
+    unchanged_a = db_accounts.find(session_json, user_a.id)
+    assert unchanged_a.username == "Eric"
+
+    with pytest.raises(AccountUnproccessableContentException):
+        db_accounts.update(
+            session_json,
+            user_a.id,
+            AccountUpdate(email="victortest@gmail.com"),
+        )
+    unchanged_a = db_accounts.find(session_json, user_a.id)
+    assert str(unchanged_a.email) == "erictest@gmail.com"
+
+    updated_a = db_accounts.update(
+        session_json,
+        user_a.id,
+        AccountUpdate(email="randomtest@gmail.com"),
+    )
+    assert str(updated_a.email) == "randomtest@gmail.com"
+
+    updated_b = db_accounts.update(
+        session_json,
+        user_b.id,
+        AccountUpdate(email="erictest@gmail.com", username="Gustavo"),
+    )
+    assert str(updated_b.email) == "erictest@gmail.com"
+    assert updated_b.username == "Gustavo"
+
+    updated_a = db_accounts.update(
+        session_json,
+        user_a.id,
+        AccountUpdate(username="Victor"),
+    )
+    assert updated_a.username == "Victor"
+
+
+def test_db_update_account_rejects_null_username_or_email(
+    session_json: Session,
+    stub_password_hashing,
+):
+    account = db_accounts.create(
+        session_json,
+        AccountCreate(
+            username="NullGuard",
+            email="nullguard@gmail.com",
+            password="null-pass",
+        ),
+    )
+
+    with pytest.raises(AccountUnproccessableContentException):
+        db_accounts.update(
+            session_json,
+            account.id,
+            AccountUpdate(username=None),
+        )
+
+    with pytest.raises(AccountUnproccessableContentException):
+        db_accounts.update(
+            session_json,
+            account.id,
+            AccountUpdate(email=None),
+        )
+
+    unchanged = db_accounts.find(session_json, account.id)
+    assert unchanged.username == "NullGuard"
+    assert str(unchanged.email) == "nullguard@gmail.com"
+
+
+def test_db_update_account_password_changes_hash(
+    session_json: Session,
+    stub_password_hashing,
+):
+    account = db_accounts.create(
+        session_json,
+        AccountCreate(
+            username="PasswordChange",
+            email="passwordchange@gmail.com",
+            password="old-pass",
+        ),
+    )
+    old_hash = account.hashed_password
+
+    updated = db_accounts.update_password(
+        session_json,
+        account.id,
+        AccountUpdate(password="new-pass"),
+    )
+
+    assert updated.hashed_password != old_hash
+    assert updated.hashed_password == "stubbed::new-pass"
+
+
+def test_db_update_account_password_same_value_no_change(
+    session_json: Session,
+    stub_password_hashing,
+):
+    account = db_accounts.create(
+        session_json,
+        AccountCreate(
+            username="PasswordSame",
+            email="passwordsame@gmail.com",
+            password="same-pass",
+        ),
+    )
+    original_hash = account.hashed_password
+
+    updated = db_accounts.update_password(
+        session_json,
+        account.id,
+        AccountUpdate(password="same-pass"),
+    )
+
+    assert updated.hashed_password == original_hash
+
+
+def test_db_update_account_password_none_ignored(
+    session_json: Session,
+    stub_password_hashing,
+):
+    account = db_accounts.create(
+        session_json,
+        AccountCreate(
+            username="PasswordNone",
+            email="passwordnone@gmail.com",
+            password="none-pass",
+        ),
+    )
+    original_hash = account.hashed_password
+
+    updated = db_accounts.update_password(
+        session_json,
+        account.id,
+        AccountUpdate(password=None),
+    )
+
+    assert updated.hashed_password == original_hash
+
+
+def test_db_delete_account(session_json: Session, stub_password_hashing):
+    user_a = db_accounts.create(
+        session_json,
+        AccountCreate(
+            username="DeleteA",
+            email="deletea@gmail.com",
+            password="delete-pass-a",
+        ),
+    )
+    user_b = db_accounts.create(
+        session_json,
+        AccountCreate(
+            username="DeleteB",
+            email="deleteb@gmail.com",
+            password="delete-pass-b",
+        ),
+    )
+
+    chat_1 = db_chats.create(
+        session_json,
+        ChatCreate(name="owner-chat-1", owner_id=user_b.id),
+    )
+    chat_2 = db_chats.create(
+        session_json,
+        ChatCreate(name="owner-chat-2", owner_id=user_b.id),
+    )
+
+    membership = ChatMembership(chat_id=chat_1.id, account_id=user_a.id)
+    session_json.add(membership)
+
+    message = Message(
+        chat_id=chat_1.id,
+        account_id=user_a.id,
+        owner_id=user_a.id,
+        text="message that should be retained",
+        created_at=datetime.now(),
+    )
+    session_json.add(message)
+    session_json.commit()
+    session_json.refresh(message)
+
+    db_accounts.delete_account(session_json, user_a.id)
+    assert db_accounts.get_account(session_json, user_a.id) is None
+
+    deleted_membership = session_json.get(
+        ChatMembership,
+        (chat_1.id, user_a.id),
+    )
+    assert deleted_membership is None
+
+    retained_message = session_json.get(Message, message.id)
+    assert retained_message is not None
+    assert retained_message.account_id is None
+
+    with pytest.raises(ActionNotAllowedException):
+        db_accounts.delete_account(session_json, user_b.id)
+
+    db_chats.delete(session_json, chat_1.id)
+    db_chats.delete(session_json, chat_2.id)
+    db_accounts.delete_account(session_json, user_b.id)
+    assert db_accounts.get_account(session_json, user_b.id) is None

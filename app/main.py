@@ -6,12 +6,12 @@ from contextlib import asynccontextmanager
 # Routers
 from app.routers.accounts import accounts_router
 from app.routers.chats import chat_router
+from app.routers.auth import auth_router
 
 # Database engine
 from app.dependencies import initialize_database
 
 from app.exceptions import BadRequestException
-
 
 
 @asynccontextmanager
@@ -27,6 +27,7 @@ app: FastAPI = FastAPI(title="Pony Express API", lifespan=lifespan)
 
 app.include_router(accounts_router)
 app.include_router(chat_router)
+app.include_router(auth_router)
 
 
 @app.get("/status")
@@ -40,4 +41,6 @@ def handle_bad_requests(
     _request: Request,
     exception: BadRequestException,
 ) -> JSONResponse:
+    """Convert custom bad request exceptions into JSON API responses."""
+
     return exception.response()

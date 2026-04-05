@@ -21,31 +21,31 @@ def session_json() -> Generator[Session]:
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    
+
     # Create all tables
     SQLModel.metadata.create_all(engine)
-    
+
     # Load test data from JSON
     test_data_path = Path(__file__).parent.parent / "test_data.json"
     with open(test_data_path) as f:
         data = json.load(f)
-    
+
     with Session(engine) as session:
         # Load accounts
         for account_data in data["accounts"]:
             account = Account(**account_data)
             session.add(account)
-        
+
         # Load chats
         for chat_data in data["chats"]:
             chat = Chat(**chat_data)
             session.add(chat)
-        
+
         # Load chat memberships
         for membership_data in data["chat_memberships"]:
             membership = ChatMembership(**membership_data)
             session.add(membership)
-        
+
         # Load messages
         for message_data in data["messages"]:
             # Parse the created_at string to datetime
@@ -55,7 +55,7 @@ def session_json() -> Generator[Session]:
                 )
             message = Message(**message_data)
             session.add(message)
-        
+
         session.commit()
         yield session
 
@@ -63,6 +63,7 @@ def session_json() -> Generator[Session]:
 @pytest.fixture
 def test_client_json(session_json: Session) -> Generator[TestClient]:
     """Test client with JSON-loaded isolated database"""
+
     def get_test_session():
         yield session_json
 
@@ -361,7 +362,7 @@ def test_create_message_valid(test_client_json):
         "text": "test message",
         "account_id": 1,
         "chat_id": chat_id,
-        "created_at": "2025-08-20 10:20:21.123456"
+        "created_at": "2025-08-20 10:20:21.123456",
     }
     response = test_client_json.post(f"/chats/{chat_id}/messages", json=message_data)
 
@@ -381,7 +382,7 @@ def test_create_message_empty_text(test_client_json):
         "text": "   ",
         "account_id": 1,
         "chat_id": chat_id,
-        "created_at": "2025-08-20 10:20:21.123456"
+        "created_at": "2025-08-20 10:20:21.123456",
     }
     response = test_client_json.post(f"/chats/{chat_id}/messages", json=message_data)
 
@@ -395,7 +396,7 @@ def test_create_message_invalid_account(test_client_json):
         "text": "test message",
         "account_id": 999,
         "chat_id": chat_id,
-        "created_at": "2025-08-20 10:20:21.123456"
+        "created_at": "2025-08-20 10:20:21.123456",
     }
     response = test_client_json.post(f"/chats/{chat_id}/messages", json=message_data)
 
@@ -409,7 +410,7 @@ def test_create_message_invalid_chat(test_client_json):
         "text": "test message",
         "account_id": 1,
         "chat_id": chat_id,
-        "created_at": "2025-08-20 10:20:21.123456"
+        "created_at": "2025-08-20 10:20:21.123456",
     }
     response = test_client_json.post(f"/chats/{chat_id}/messages", json=message_data)
 
@@ -427,7 +428,7 @@ def test_create_message_unauthorized(test_client_json):
         "text": "test message",
         "account_id": 11,
         "chat_id": chat_id,
-        "created_at": "2025-08-20 10:20:21.123456"
+        "created_at": "2025-08-20 10:20:21.123456",
     }
     response = test_client_json.post(f"/chats/{chat_id}/messages", json=message_data)
 
@@ -442,7 +443,12 @@ def test_update_message_valid(test_client_json):
     chat_id = 1
     message_id = 1
 
-    update_data = {"text": "updated message", "account_id": 1, "chat_id": chat_id, "owner_id": 1}
+    update_data = {
+        "text": "updated message",
+        "account_id": 1,
+        "chat_id": chat_id,
+        "owner_id": 1,
+    }
     response = test_client_json.patch(
         f"/chats/{chat_id}/messages?message_id={message_id}", json=update_data
     )
@@ -460,7 +466,12 @@ def test_update_message_invalid_message_id(test_client_json):
     chat_id = 1
     message_id = 999
 
-    update_data = {"text": "updated message", "account_id": 1, "chat_id": chat_id, "owner_id": 1}
+    update_data = {
+        "text": "updated message",
+        "account_id": 1,
+        "chat_id": chat_id,
+        "owner_id": 1,
+    }
     response = test_client_json.patch(
         f"/chats/{chat_id}/messages?message_id={message_id}", json=update_data
     )
@@ -489,7 +500,9 @@ def test_delete_message_valid(test_client_json):
     chat_id = 1
     message_id = 1
 
-    response = test_client_json.delete(f"/chats/{chat_id}/messages?message_id={message_id}")
+    response = test_client_json.delete(
+        f"/chats/{chat_id}/messages?message_id={message_id}"
+    )
 
     assert response.status_code == 204
 
@@ -499,7 +512,9 @@ def test_delete_message_invalid_id(test_client_json):
     chat_id = 1
     message_id = 999
 
-    response = test_client_json.delete(f"/chats/{chat_id}/messages?message_id={message_id}")
+    response = test_client_json.delete(
+        f"/chats/{chat_id}/messages?message_id={message_id}"
+    )
 
     assert response.status_code == 404
 
@@ -510,7 +525,9 @@ def test_delete_message_verify_deletion(test_client_json):
     message_id = 2
 
     # Delete the message
-    response = test_client_json.delete(f"/chats/{chat_id}/messages?message_id={message_id}")
+    response = test_client_json.delete(
+        f"/chats/{chat_id}/messages?message_id={message_id}"
+    )
     assert response.status_code == 204
 
 
@@ -522,7 +539,9 @@ def test_add_account_to_chat_valid(test_client_json):
     chat_id = 1
     account_id = 11
 
-    response = test_client_json.put(f"/chats/{chat_id}/accounts?account_id={account_id}")
+    response = test_client_json.put(
+        f"/chats/{chat_id}/accounts?account_id={account_id}"
+    )
 
     assert response.status_code == 204
 
@@ -532,7 +551,9 @@ def test_add_account_to_chat_invalid_account(test_client_json):
     chat_id = 1
     account_id = 999
 
-    response = test_client_json.put(f"/chats/{chat_id}/accounts?account_id={account_id}")
+    response = test_client_json.put(
+        f"/chats/{chat_id}/accounts?account_id={account_id}"
+    )
 
     assert response.status_code == 404
 
@@ -542,7 +563,9 @@ def test_add_account_to_chat_invalid_chat(test_client_json):
     chat_id = 999
     account_id = 1
 
-    response = test_client_json.put(f"/chats/{chat_id}/accounts?account_id={account_id}")
+    response = test_client_json.put(
+        f"/chats/{chat_id}/accounts?account_id={account_id}"
+    )
 
     assert response.status_code == 404
     assert response.json() == {
@@ -557,7 +580,9 @@ def test_add_account_to_chat_verify_added(test_client_json):
     account_id = 11
 
     # Add account to chat
-    response = test_client_json.put(f"/chats/{chat_id}/accounts?account_id={account_id}")
+    response = test_client_json.put(
+        f"/chats/{chat_id}/accounts?account_id={account_id}"
+    )
     assert response.status_code == 204
 
     # Verify account is in chat
@@ -577,7 +602,9 @@ def test_remove_account_from_chat_valid(test_client_json):
     chat_id = 1
     account_id = 2
 
-    response = test_client_json.delete(f"/chats/{chat_id}/accounts?account_id={account_id}")
+    response = test_client_json.delete(
+        f"/chats/{chat_id}/accounts?account_id={account_id}"
+    )
 
     assert response.status_code == 204
 
@@ -587,7 +614,9 @@ def test_remove_account_from_chat_invalid_account(test_client_json):
     chat_id = 1
     account_id = 999
 
-    response = test_client_json.delete(f"/chats/{chat_id}/accounts?account_id={account_id}")
+    response = test_client_json.delete(
+        f"/chats/{chat_id}/accounts?account_id={account_id}"
+    )
 
     assert response.status_code == 404
 
@@ -597,7 +626,9 @@ def test_remove_account_from_chat_owner(test_client_json):
     chat_id = 1
     owner_id = 1
 
-    response = test_client_json.delete(f"/chats/{chat_id}/accounts?account_id={owner_id}")
+    response = test_client_json.delete(
+        f"/chats/{chat_id}/accounts?account_id={owner_id}"
+    )
 
     assert response.status_code == 400
 
@@ -608,7 +639,9 @@ def test_remove_account_from_chat_verify_removed(test_client_json):
     account_id = 2
 
     # Remove account from chat
-    response = test_client_json.delete(f"/chats/{chat_id}/accounts?account_id={account_id}")
+    response = test_client_json.delete(
+        f"/chats/{chat_id}/accounts?account_id={account_id}"
+    )
     assert response.status_code == 204
 
     # Verify account is not in chat

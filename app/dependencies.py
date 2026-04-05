@@ -13,6 +13,8 @@ engine = create_engine("sqlite:///data/assign02_data.db", echo=True)
 
 
 def initialize_database():
+    """Initialize database tables and enable SQLite foreign key checks."""
+
     SQLModel.metadata.create_all(engine)
 
     # turn on foreign keys
@@ -22,6 +24,8 @@ def initialize_database():
 
 # Session Dependency
 def get_session() -> Generator[Session]:
+    """Yield a database session for request-scoped dependency injection."""
+
     with Session(engine) as session:
         yield session
 

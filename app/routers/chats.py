@@ -1,7 +1,6 @@
 from typing import Literal
 
 from fastapi import APIRouter
-from fastapi.exceptions import HTTPException
 
 # Model Imports
 from app.models.chats import Chat, ChatCollection, ChatCreate, ChatUpdate
@@ -14,7 +13,6 @@ from app.database import chats as chats_db
 from app.database import memberships as memberships_db
 from app.database import messages as messages_db
 from app.dependencies import DBSession
-from app.database.schema import Chat as DBChat
 
 chat_router = APIRouter(prefix="/chats", tags=["Chats"])
 
@@ -63,7 +61,7 @@ def get_chat_accounts(
 
 @chat_router.get("/{chat_id}/messages")
 def get_messages(session: DBSession, chat_id: int) -> MessageCollection:
-    """Retrieve all messages matching a given chat_id."""
+    """Retrieve all messages for a chat ordered by created time."""
 
     # Verify chat exists
     chats_db.find(session, chat_id)
@@ -80,7 +78,7 @@ def get_messages(session: DBSession, chat_id: int) -> MessageCollection:
 
 @chat_router.post("", response_model=Chat, status_code=201)
 def create_chat(session: DBSession, create: ChatCreate) -> Chat:
-    """Add a new chat"""
+    """Create a new chat and return the created resource."""
 
     db_chat = chats_db.create(session, create)
     return db_chat
@@ -88,7 +86,7 @@ def create_chat(session: DBSession, create: ChatCreate) -> Chat:
 
 @chat_router.put("/{chat_id}", response_model=Chat)
 def update_chat(session: DBSession, chat_id: int, update: ChatUpdate) -> Chat:
-    """Update a chat"""
+    """Update chat name and owner for a given chat id."""
 
     db_chat = chats_db.update(session, chat_id, update)
     return db_chat
@@ -96,14 +94,14 @@ def update_chat(session: DBSession, chat_id: int, update: ChatUpdate) -> Chat:
 
 @chat_router.delete("/{chat_id}", status_code=204)
 def delete_chat(session: DBSession, chat_id: int) -> None:
-    """Remove a chat from the library"""
+    """Delete a chat by id and return no content."""
 
     chats_db.delete(session, chat_id)
 
 
 @chat_router.post("/{chat_id}/messages", response_model=Message, status_code=201)
 def create_message(session: DBSession, chat_id: int, create: MessageCreate) -> Message:
-    """Add a new message to a chat"""
+    """Create a message in a chat and return the created message."""
 
     db_message = messages_db.create(session, create)
     return Message(**db_message.model_dump())
@@ -113,7 +111,7 @@ def create_message(session: DBSession, chat_id: int, create: MessageCreate) -> M
 def update_message(
     session: DBSession, chat_id: int, message_id: int, update: MessageUpdate
 ) -> Message:
-    """Update a message in a chat"""
+    """Update a chat message by message id and return updated content."""
 
     db_message = messages_db.update(session, message_id, update)
     return Message(**db_message.model_dump())
@@ -121,20 +119,20 @@ def update_message(
 
 @chat_router.delete("/{chat_id}/messages", status_code=204)
 def delete_message(session: DBSession, chat_id: int, message_id: int) -> None:
-    """Remove a message from a chat"""
+    """Delete a message from a chat and return no content."""
 
     messages_db.delete(session, message_id, chat_id)
 
 
 @chat_router.put("/{chat_id}/accounts", status_code=204)
 def add_account_to_chat(session: DBSession, chat_id: int, account_id: int) -> None:
-    """Add an account to a chat"""
+    """Add an account membership to a chat and return no content."""
 
     memberships_db.create(session, account_id, chat_id)
 
 
 @chat_router.delete("/{chat_id}/accounts", status_code=204)
 def remove_account_from_chat(session: DBSession, chat_id: int, account_id: int) -> None:
-    """Remove an account from a chat"""
+    """Remove an account membership from a chat and return no content."""
 
     memberships_db.delete(session, account_id, chat_id)

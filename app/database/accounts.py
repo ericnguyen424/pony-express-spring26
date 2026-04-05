@@ -5,15 +5,16 @@ Database functionality for accounts table
 
 from collections.abc import Sequence
 from typing import Literal
-from sqlmodel import Session, select
-from app.database.schema import Account, Chat
+from sqlmodel import Session, select, delete as sql_delete, update as sql_update
+from app.database.schema import Account, Chat, ChatMembership, Message
 from app.exceptions import (
     AccountUnproccessableContentException,
-    BadRequestException,
+    ActionNotAllowedException,
     EntityNotFoundException,
 )
 from app.models.accounts import AccountCreate, AccountUpdate
-from app.auth import hash, verify
+from app import auth
+
 
 # Retrieve **all accounts**
 def get_accounts(
@@ -82,10 +83,11 @@ def find_by_username(session: Session, username: str) -> Account | None:
     results = session.exec(stmt)
     return results.first()
 
+
 def get_hashed_password(session: Session, account_id: int):
     """Retrieve hashed password from db
 
-    Args: 
+    Args:
     session(Session): the db session
     account_id (int): id of account
 
@@ -95,6 +97,7 @@ def get_hashed_password(session: Session, account_id: int):
 
     account = get_account(session, account_id)
     return account.hashed_password
+
 
 def find_by_email(session: Session, email: str) -> Account | None:
     """Retrieve account from database by email.
@@ -111,9 +114,10 @@ def find_by_email(session: Session, email: str) -> Account | None:
     results = session.exec(stmt)
     return results.first()
 
+
 def create(session: Session, create: AccountCreate) -> Account:
     """Add new account to database
-    
+
     Args:
         session (Session): the database session
         create (AccountCreate): the attributes for creating an account
@@ -121,28 +125,29 @@ def create(session: Session, create: AccountCreate) -> Account:
         Returns:
             Newly created account
 
-        Raises: 
+        Raises:
             UnprocessableContentException: if username or email is in use
     """
 
     # Raise exception if account already exists (check username and email)
-    if (find_by_email(create.email) is not None):
-        AccountUnproccessableContentException("email", create.email)
+    if find_by_email(session, str(create.email)) is not None:
+        raise AccountUnproccessableContentException("email", str(create.email))
 
-    if (find_by_username(create.username) is not None):
-        AccountUnproccessableContentException("username", create.username)
+    if find_by_username(session, create.username) is not None:
+        raise AccountUnproccessableContentException("username", create.username)
 
     account = Account(
-        username = create.username,
-        email = create.email,
-        hashed_password=hash(create.password)
+        username=create.username,
+        email=create.email,
+        hashed_password=auth.hash(create.password),
     )
-    
+
     session.add(account)
     session.commit()
     session.refresh(account)
 
     return account
+
 
 def update(session: Session, account_id: int, update: AccountUpdate) -> Account:
     """Update an account in the database
@@ -161,7 +166,13 @@ def update(session: Session, account_id: int, update: AccountUpdate) -> Account:
     """
 
     account = find(session, account_id)
-    
+
+    if "username" in update.model_fields_set and update.username is None:
+        raise AccountUnproccessableContentException("username", "None")
+
+    if "email" in update.model_fields_set and update.email is None:
+        raise AccountUnproccessableContentException("email", "None")
+
     if update.username is not None and account.username != update.username:
         existing_username = find_by_username(session, update.username)
         if existing_username is not None and existing_username.id != account.id:
@@ -174,21 +185,24 @@ def update(session: Session, account_id: int, update: AccountUpdate) -> Account:
             raise AccountUnproccessableContentException("email", str(update.email))
         account.email = str(update.email)
 
-    if update.password is not None and not verify(update.password, account.hashed_password):
-        account.hashed_password = hash(update.password)
-    
+    if update.password is not None and not auth.verify(
+        update.password, account.hashed_password
+    ):
+        account.hashed_password = auth.hash_like_existing(
+            update.password,
+            account.hashed_password,
+        )
+
     session.add(account)
     session.commit()
     session.refresh(account)
     return account
 
+
 def update_password(
-    session: Session,
-    account_id: int,
-    old_password: str,
-    new_password: str,
+    session: Session, account_id: int, update: AccountUpdate
 ) -> Account:
-    """Update account password in the database.
+    """Update an account in the database
 
     Args:
         session (Session): the database session
@@ -206,46 +220,55 @@ def update_password(
 
     account = find(session, account_id)
 
-    if not verify(old_password, account.hashed_password):
-        raise BadRequestException(
-            status_code=401,
-            error="invalid_credentials",
-            message="Invalid credentials: invalid combination username and password",
+    if update.password is not None and not auth.verify(
+        update.password, account.hashed_password
+    ):
+        account.hashed_password = auth.hash_like_existing(
+            update.password,
+            account.hashed_password,
         )
-
-    if not verify(new_password, account.hashed_password):
-        account.hashed_password = hash(new_password)
 
     session.add(account)
     session.commit()
     session.refresh(account)
     return account
 
-def delete_account(session: Session, account_id: int): 
+
+def delete_account(session: Session, account_id: int):
     """Delete an account in the database
 
     Args:
         session(Session): the database session
         account_id: id of account to delete
 
-    Returns: 
+    Returns:
         None
-    
-    Raises: 
+
+    Raises:
         EntityNotFoundException if account doesn't exist
-        UnprocessableException if account 
+        UnprocessableException if account
     """
     account = find(session, account_id)
 
-    owns_chat = session.exec(
-        select(Chat).where(Chat.owner_id == account_id)
-    ).first()
-    if owns_chat is not None:
-        raise BadRequestException(
-            status_code=422,
-            error="action_not_allowed",
-            message="Action not allowed: deletion of chat owner",
-        )
+    # Block deleting an account that still owns chats
+    owns_chat_stmt = select(Chat).where(Chat.owner_id == account_id)
+    owned_chat = session.exec(owns_chat_stmt).first()
+    if owned_chat is not None:
+        raise ActionNotAllowedException()
+
+    # Associated messages should be retained with account_id set to NULL
+    null_messages_stmt = (
+        sql_update(Message)
+        .where(Message.account_id == account_id)
+        .values(account_id=None)
+    )
+    session.exec(null_messages_stmt)
+
+    # Associated memberships should be deleted
+    delete_memberships_stmt = sql_delete(ChatMembership).where(
+        ChatMembership.account_id == account_id
+    )
+    session.exec(delete_memberships_stmt)
 
     session.delete(account)
     session.commit()

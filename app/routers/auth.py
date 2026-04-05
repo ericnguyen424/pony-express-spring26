@@ -1,145 +1,189 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import os
 
-import bcrypt
-from fastapi import APIRouter, Form, Response, status
+from fastapi import APIRouter, Form, Request, Response, status
 from jose import jwt
 from pydantic import EmailStr
 
-from app.auth import hash, verify
+from app import auth
 from app.database import accounts as accounts_db
 from app.dependencies import DBSession
 from app.database.schema import Account as DBAccount
 from app.exceptions import UnauthorizedAccessException
-from app.models.accounts import Account, AccountCreate
+from app.models.accounts import AccountCreate, AuthenticatedAccount
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 
 JWT_ALGORITHM = "HS256"
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+JWT_SECRET_KEY = os.environ.get(
+    "PONY_EXPRESS_JWT_SECRET_KEY",
+    default="pony-express-dev-secret-key",
+)
+JWT_ISSUER = "http://127.0.0.1"
+ACCESS_TOKEN_EXPIRE_SECONDS = 3600
 
 
-def _is_bcrypt_hash(hashed_password: str) -> bool:
-	"""Return whether the given password hash is bcrypt formatted."""
+async def _read_form_or_json_payload(request: Request) -> dict:
+    """Read request payload from form body with JSON fallback."""
 
-	return hashed_password.startswith(("$2a$", "$2b$", "$2y$"))
+    payload: dict = {}
+
+    try:
+        form_data = await request.form()
+        if form_data:
+            payload = dict(form_data)
+    except Exception:
+        payload = {}
+
+    if payload:
+        return payload
+
+    try:
+        json_data = await request.json()
+    except Exception:
+        return {}
+
+    if isinstance(json_data, dict):
+        return json_data
+
+    return {}
 
 
 def _upgrade_bcrypt_hash_if_needed(
-	session: DBSession,
-	account: DBAccount,
-	password: str,
+    session: DBSession,
+    account: DBAccount,
+    password: str,
 ) -> None:
-	"""Upgrade bcrypt password hash to argon2 when credentials are valid."""
+    """Upgrade bcrypt password hash to argon2 when credentials are valid."""
 
-	if not _is_bcrypt_hash(account.hashed_password):
-		return
+    if not auth.is_bcrypt_hash(account.hashed_password):
+        return
 
-	if not bcrypt.checkpw(
-		password.encode("utf-8"),
-		account.hashed_password.encode("utf-8"),
-	):
-		raise UnauthorizedAccessException()
+    if not auth.verify_with_legacy_support(password, account.hashed_password):
+        raise UnauthorizedAccessException()
 
-	account.hashed_password = hash(password)
-	session.add(account)
-	session.commit()
-	session.refresh(account)
+    account.hashed_password = auth.hash(password)
+    session.add(account)
+    session.commit()
+    session.refresh(account)
 
 
 def _authenticate_account(
-	session: DBSession,
-	username: str,
-	password: str,
+    session: DBSession,
+    username: str,
+    password: str,
 ) -> DBAccount:
-	"""Authenticate account credentials and return the db account."""
+    """Authenticate account credentials and return the db account."""
 
-	account = accounts_db.find_by_username(session, username)
-	if account is None:
-		raise UnauthorizedAccessException()
+    account = accounts_db.find_by_username(session, username)
+    if account is None:
+        raise UnauthorizedAccessException()
 
-	_upgrade_bcrypt_hash_if_needed(session, account, password)
+    _upgrade_bcrypt_hash_if_needed(session, account, password)
 
-	if not verify(password, account.hashed_password):
-		raise UnauthorizedAccessException()
+    if not auth.verify(password, account.hashed_password):
+        raise UnauthorizedAccessException()
 
-	return account
+    return account
 
 
 def _create_access_token(account: DBAccount) -> str:
-	"""Create an access token for an authenticated account."""
+    """Create an access token for an authenticated account."""
 
-	expires_at = datetime.now(timezone.utc) + timedelta(
-		minutes=ACCESS_TOKEN_EXPIRE_MINUTES,
-	)
+    issued_at = int(datetime.now(timezone.utc).timestamp())
+    expires_at = issued_at + ACCESS_TOKEN_EXPIRE_SECONDS
 
-	return jwt.encode(
-		{
-			"sub": account.username,
-			"account_id": account.id,
-			"exp": int(expires_at.timestamp()),
-		},
-		JWT_SECRET_KEY,
-		algorithm=JWT_ALGORITHM,
-	)
+    return jwt.encode(
+        {
+            "sub": str(account.id),
+            "iss": JWT_ISSUER,
+            "iat": issued_at,
+            "exp": expires_at,
+        },
+        JWT_SECRET_KEY,
+        algorithm=JWT_ALGORITHM,
+    )
 
 
-@auth_router.post("/registrations", response_model=Account, status_code=status.HTTP_201_CREATED)
-def register_account(
-	session: DBSession,
-	username: str = Form(...),
-	email: EmailStr = Form(...),
-	password: str = Form(...),
-) -> Account:
-	"""Register a new account."""
-    
-	created = accounts_db.create(
-		session,
-		AccountCreate(username=username, email=email, password=password),
-	)
-	return Account(**created.model_dump(exclude={"hashed_password"}))
+@auth_router.post(
+    "/registrations",
+    response_model=AuthenticatedAccount,
+    status_code=status.HTTP_201_CREATED,
+)
+async def register_account(
+    session: DBSession,
+    request: Request,
+    username: str | None = Form(default=None),
+    email: EmailStr | None = Form(default=None),
+    password: str | None = Form(default=None),
+) -> AuthenticatedAccount:
+    """Register a new account and return authenticated account details."""
+
+    payload = await _read_form_or_json_payload(request)
+    resolved_username = username if username is not None else payload.get("username")
+    resolved_email = email if email is not None else payload.get("email")
+    resolved_password = password if password is not None else payload.get("password")
+
+    created = accounts_db.create(
+        session,
+        AccountCreate(
+            username=resolved_username,
+            email=resolved_email,
+            password=resolved_password,
+        ),
+    )
+    return AuthenticatedAccount(**created.model_dump(exclude={"hashed_password"}))
 
 
 @auth_router.post("/tokens", status_code=status.HTTP_200_OK)
-def create_token(
-	session: DBSession,
-	username: str = Form(...),
-	password: str = Form(...),
+async def create_token(
+    session: DBSession,
+    request: Request,
+    username: str | None = Form(default=None),
+    password: str | None = Form(default=None),
 ) -> dict[str, str]:
-	"""Authenticate credentials and return a bearer access token."""
+    """Authenticate credentials and return a bearer access token."""
 
-	account = _authenticate_account(session, username, password)
-	access_token = _create_access_token(account)
+    payload = await _read_form_or_json_payload(request)
+    resolved_username = username if username is not None else payload.get("username")
+    resolved_password = password if password is not None else payload.get("password")
 
-	return {"access_token": access_token, "token_type": "bearer"}
+    account = _authenticate_account(session, resolved_username, resolved_password)
+    access_token = _create_access_token(account)
+
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @auth_router.post("/logins", status_code=status.HTTP_204_NO_CONTENT)
-def login(
-	session: DBSession,
-	response: Response,
-	username: str = Form(...),
-	password: str = Form(...),
+async def login(
+    session: DBSession,
+    response: Response,
+    request: Request,
+    username: str | None = Form(default=None),
+    password: str | None = Form(default=None),
 ) -> Response:
-	"""Authenticate credentials and set access token cookie."""
+    """Authenticate credentials and store an HTTP-only access token cookie."""
 
-	account = _authenticate_account(session, username, password)
-	access_token = _create_access_token(account)
+    payload = await _read_form_or_json_payload(request)
+    resolved_username = username if username is not None else payload.get("username")
+    resolved_password = password if password is not None else payload.get("password")
 
-	response.set_cookie(
-		key="pony_express_token",
-		value=access_token,
-		httponly=True,
-	)
-	response.status_code = status.HTTP_204_NO_CONTENT
-	return response
+    account = _authenticate_account(session, resolved_username, resolved_password)
+    access_token = _create_access_token(account)
+
+    response.set_cookie(
+        key="pony_express_token",
+        value=access_token,
+        httponly=True,
+    )
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
 
 @auth_router.delete("/logins", status_code=status.HTTP_204_NO_CONTENT)
 def logout(response: Response) -> Response:
-	"""Delete auth cookie if present."""
+    """Clear the auth cookie and return no content."""
 
-	response.delete_cookie(key="pony_express_token")
-	response.status_code = status.HTTP_204_NO_CONTENT
-	return response
+    response.delete_cookie(key="pony_express_token")
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
