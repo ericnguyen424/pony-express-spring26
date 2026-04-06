@@ -1,6 +1,6 @@
 export type NavItem = 
-    | {kind : "page"; name: string; link: string}
-    | {kind : "chat"; chats: { name: string; link: string}[]}
+    | {kind : "page"; name: string; link: string; active?: boolean}
+    | {kind : "chat"; chats: { name: string; link: string; active?: boolean}[]}
 
 export default function NavBar({items} : { items: NavItem[]}) {
     return (
@@ -23,7 +23,12 @@ function renderNavItem(item: NavItem){
     switch (item.kind) {
         case "page":
             return (
-                <li key={item.link}><a href= {item.link}>{item.name}</a></li>
+                <li key={item.link}>
+                    <a href={item.link} aria-current={item.active ? "page" : undefined}>
+                        {item.name}
+                    </a>
+                    {item.active ? <span> (current)</span> : null}
+                </li>
             )
         
         case "chat":
@@ -31,7 +36,12 @@ function renderNavItem(item: NavItem){
                 <li key = "Chat">Chat
                     <ul>
                        {item.chats.map((chat) => (
-                        <li key={chat.link}><a href={chat.link}>{chat.name}</a></li>
+                        <li key={chat.link}>
+                            <a href={chat.link} aria-current={chat.active ? "page" : undefined}>
+                                {chat.name}
+                            </a>
+                            {chat.active ? <span> (current)</span> : null}
+                        </li>
                        ))}
                     </ul>
                 </li>
