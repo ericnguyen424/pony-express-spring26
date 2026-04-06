@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { getChats } from '../../api'
 import NavBar, { type NavItem } from '../../../components/navbar'
 
 export const Route = createFileRoute('/chat/chats')({
@@ -6,14 +7,19 @@ export const Route = createFileRoute('/chat/chats')({
 })
 
 function Chats() {
+  const chats = getChats()
+
   const items: NavItem[] = [
     { kind: 'page', name: 'Account', link: '/account' },
-    { kind: 'page', name: 'Chats', link: '/chat/chats', active: true },
     {
       kind: 'chat',
-      chats: [
-        { name: 'Chat', link: '/chat/chat_id' },
-      ],
+      name: 'Chats',
+      link: '/chat/chats',
+      active: true,
+      chats: chats.map((chat) => ({
+        name: chat.name,
+        link: `/chat/${chat.id}`,
+      })),
     },
   ]
 

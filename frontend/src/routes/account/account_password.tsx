@@ -8,8 +8,7 @@ export const Route = createFileRoute('/account/account_password')({
 function AccountPassword() {
   const items: NavItem[] = [
     { kind: 'page', name: 'Account', link: '/account', active: true },
-    { kind: 'page', name: 'Chats', link: '/chats' },
-    { kind: 'chat', chats: [] },
+    { kind: 'chat', name: 'Chats', link: '/chats', chats: [] },
   ]
 
   return (

@@ -8,8 +8,7 @@ export const Route = createFileRoute("/")( {
 function Index() {
     const items: NavItem[] = [
         {kind : "page", name: "Account", link: "/account"}, 
-        {kind : "page", name: "Chats", link: "/chats"},
-        {kind : "chat", chats: []}
+        {kind : "chat", name: "Chats", link: "/chats", chats: []}
     ]
 
     return (

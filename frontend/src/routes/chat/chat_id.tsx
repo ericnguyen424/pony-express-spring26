@@ -1,33 +1,34 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { getChats, getMessagesForChat } from '../../api'
 import NavBar, { type NavItem } from '../../../components/navbar'
-
-type ChatMessage = {
-  id: string
-  account_id: number | null
-  username: string | null
-  created_at: string
-  text: string
-}
 
 export const Route = createFileRoute('/chat/chat_id')({
   component: ChatDetail,
 })
 
 function ChatDetail() {
+  const chatId = 'general'
+
+  const chatLinks = getChats().map((chat) => ({
+    name: chat.name,
+    link: `/chat/${chat.id}`,
+  }))
+
   const items: NavItem[] = [
     { kind: 'page', name: 'Account', link: '/account' },
-    { kind: 'page', name: 'Chats', link: '/chat/chats' },
     {
       kind: 'chat',
-      chats: [{ name: 'Chat', link: '/chat/chat_id', active: true }],
+      name: 'Chats',
+      link: '/chat/chats',
+      active: true,
+      chats: chatLinks.map((chat) => ({
+        ...chat,
+        active: chat.link === `/chat/${chatId}`,
+      })),
     },
   ]
 
-  const messages: ChatMessage[] = [
-    { id: '1', account_id: 11, username: 'alex', created_at: '2026-04-05T09:00:00.000Z', text: 'Welcome to the chat.' },
-    { id: '2', account_id: null, username: null, created_at: '2026-04-05T09:04:00.000Z', text: 'This account was removed.' },
-    { id: '3', account_id: 12, username: 'sam', created_at: '2026-04-05T09:06:00.000Z', text: 'Thanks for the update.' },
-  ]
+  const messages = getMessagesForChat(chatId)
 
   const sorted = [...messages].sort(
     (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),

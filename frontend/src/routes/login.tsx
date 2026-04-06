@@ -7,8 +7,6 @@ export const Route = createFileRoute('/login')({
 
 function Login() {
     const items: NavItem[] = [
-        { kind: "page", name: "Account", link: "/account" },
-        { kind: "page", name: "Chats", link: "/chats" },
         { kind: "page", name: "Login", link: "/login", active: true },
         { kind: "page", name: "Register", link: "/register" },
     ];
