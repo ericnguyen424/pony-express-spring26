@@ -9,27 +9,202 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChatChatsRouteImport } from './routes/chat/chats'
+import { Route as ChatChat_idRouteImport } from './routes/chat/chat_id'
+import { Route as AccountAccount_settingsRouteImport } from './routes/account/account_settings'
+import { Route as AccountAccount_passwordRouteImport } from './routes/account/account_password'
+import { Route as AccountAccountRouteImport } from './routes/account/account'
 
-export interface FileRoutesByFullPath {}
-export interface FileRoutesByTo {}
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatChatsRoute = ChatChatsRouteImport.update({
+  id: '/chat/chats',
+  path: '/chat/chats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatChat_idRoute = ChatChat_idRouteImport.update({
+  id: '/chat/chat_id',
+  path: '/chat/chat_id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountAccount_settingsRoute = AccountAccount_settingsRouteImport.update({
+  id: '/account/account_settings',
+  path: '/account/account_settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountAccount_passwordRoute = AccountAccount_passwordRouteImport.update({
+  id: '/account/account_password',
+  path: '/account/account_password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountAccountRoute = AccountAccountRouteImport.update({
+  id: '/account/account',
+  path: '/account/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
+export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/account/account': typeof AccountAccountRoute
+  '/account/account_password': typeof AccountAccount_passwordRoute
+  '/account/account_settings': typeof AccountAccount_settingsRoute
+  '/chat/chat_id': typeof ChatChat_idRoute
+  '/chat/chats': typeof ChatChatsRoute
+}
+export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/account/account': typeof AccountAccountRoute
+  '/account/account_password': typeof AccountAccount_passwordRoute
+  '/account/account_settings': typeof AccountAccount_settingsRoute
+  '/chat/chat_id': typeof ChatChat_idRoute
+  '/chat/chats': typeof ChatChatsRoute
+}
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/account/account': typeof AccountAccountRoute
+  '/account/account_password': typeof AccountAccount_passwordRoute
+  '/account/account_settings': typeof AccountAccount_settingsRoute
+  '/chat/chat_id': typeof ChatChat_idRoute
+  '/chat/chats': typeof ChatChatsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: never
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/account/account'
+    | '/account/account_password'
+    | '/account/account_settings'
+    | '/chat/chat_id'
+    | '/chat/chats'
   fileRoutesByTo: FileRoutesByTo
-  to: never
-  id: '__root__'
+  to:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/account/account'
+    | '/account/account_password'
+    | '/account/account_settings'
+    | '/chat/chat_id'
+    | '/chat/chats'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/register'
+    | '/account/account'
+    | '/account/account_password'
+    | '/account/account_settings'
+    | '/chat/chat_id'
+    | '/chat/chats'
   fileRoutesById: FileRoutesById
 }
-export interface RootRouteChildren {}
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {}
+export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  AccountAccountRoute: typeof AccountAccountRoute
+  AccountAccount_passwordRoute: typeof AccountAccount_passwordRoute
+  AccountAccount_settingsRoute: typeof AccountAccount_settingsRoute
+  ChatChat_idRoute: typeof ChatChat_idRoute
+  ChatChatsRoute: typeof ChatChatsRoute
 }
 
-const rootRouteChildren: RootRouteChildren = {}
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/chats': {
+      id: '/chat/chats'
+      path: '/chat/chats'
+      fullPath: '/chat/chats'
+      preLoaderRoute: typeof ChatChatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/chat_id': {
+      id: '/chat/chat_id'
+      path: '/chat/chat_id'
+      fullPath: '/chat/chat_id'
+      preLoaderRoute: typeof ChatChat_idRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/account_settings': {
+      id: '/account/account_settings'
+      path: '/account/account_settings'
+      fullPath: '/account/account_settings'
+      preLoaderRoute: typeof AccountAccount_settingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/account_password': {
+      id: '/account/account_password'
+      path: '/account/account_password'
+      fullPath: '/account/account_password'
+      preLoaderRoute: typeof AccountAccount_passwordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/account': {
+      id: '/account/account'
+      path: '/account/account'
+      fullPath: '/account/account'
+      preLoaderRoute: typeof AccountAccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
+}
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  AccountAccountRoute: AccountAccountRoute,
+  AccountAccount_passwordRoute: AccountAccount_passwordRoute,
+  AccountAccount_settingsRoute: AccountAccount_settingsRoute,
+  ChatChat_idRoute: ChatChat_idRoute,
+  ChatChatsRoute: ChatChatsRoute,
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()

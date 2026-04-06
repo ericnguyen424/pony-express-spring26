@@ -1,8 +1,8 @@
-type NavItem = 
+export type NavItem = 
     | {kind : "page"; name: string; link: string}
-    | {kind : "chat-group"; chats: { name: string; link: string}[]}
+    | {kind : "chat"; chats: { name: string; link: string}[]}
 
-export default function NavBar(items : NavItem[]) {
+export default function NavBar({items} : { items: NavItem[]}) {
     return (
         <>
         <header>
@@ -26,7 +26,7 @@ function renderNavItem(item: NavItem){
                 <li key={item.link}><a href= {item.link}>{item.name}</a></li>
             )
         
-        case "chat-group":
+        case "chat":
             return (
                 <li key = "Chat">Chat
                     <ul>
