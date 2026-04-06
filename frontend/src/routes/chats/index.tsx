@@ -19,10 +19,11 @@ function Chats() {
   ]
 
   return (
-    <>
+    <div className="min-h-screen flex bg-gray-50">
       <NavBar items={items}></NavBar>
 
-      <main className="max-w-md mx-auto mt-10 px-4">
+      <main className="flex-1 p-8">
+        <div className="max-w-md">
         <h1 className="text-3xl font-bold mb-6">Chats</h1>
 
         <form className="space-y-4 p-6 border rounded-lg bg-white shadow-sm">
@@ -45,7 +46,8 @@ function Chats() {
             Start a new chat
           </button>
         </form>
+        </div>
       </main>
-    </>
+    </div>
   )
 }

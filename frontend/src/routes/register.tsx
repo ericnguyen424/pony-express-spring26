@@ -7,15 +7,18 @@ export const Route = createFileRoute('/register')({
 
 function Register() {
   const items: NavItem[] = [
+    { kind: "page", name: "Account", link: "/account" },
+    { kind: "page", name: "Chats", link: "/chats" },
     { kind: "page", name: "Login", link: "/login" },
     { kind: "page", name: "Register", link: "/register", active: true },
   ];
 
   return (
-    <>
+    <div className="min-h-screen flex bg-gray-50">
       <NavBar items={items}></NavBar>
 
-      <main className="max-w-md mx-auto mt-10 px-4">
+      <main className="flex-1 p-8">
+        <div className="max-w-md">
         <h1 className="text-3xl font-bold mb-6">Register</h1>
 
         <form className="space-y-4 p-6 border rounded-lg bg-white shadow-sm">
@@ -74,7 +77,8 @@ function Register() {
             Register
           </button>
         </form>
+        </div>
       </main>
-    </>
+    </div>
   );
 }

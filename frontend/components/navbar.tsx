@@ -4,18 +4,17 @@ export type NavItem =
 
 export default function NavBar({items} : { items: NavItem[]}) {
     return (
-        <>
-        <header>
-            <h2>
-                <a href="/">Pony Express</a>
-            </h2>
-        </header>
-        <body>
-            <ul>
+        <aside className="w-64 shrink-0 min-h-screen border-r bg-white p-4">
+            <header className="mb-6">
+                <h2 className="text-2xl font-bold">
+                    <a href="/">Pony Express</a>
+                </h2>
+            </header>
+
+            <ul className="space-y-2">
                 {items.map((item) => renderNavItem(item))}
             </ul>
-        </body>
-        </>
+        </aside>
     )
 }
 
@@ -24,23 +23,40 @@ function renderNavItem(item: NavItem){
         case "page":
             return (
                 <li key={item.link}>
-                    <a href={item.link} aria-current={item.active ? "page" : undefined}>
+                    <a
+                        href={item.link}
+                        aria-current={item.active ? "page" : undefined}
+                        className={[
+                            "block rounded-md px-3 py-2 border",
+                            item.active
+                                ? "border-blue-300 bg-blue-50 text-blue-800 font-semibold"
+                                : "border-transparent hover:bg-gray-100",
+                        ].join(" ")}
+                    >
                         {item.name}
                     </a>
-                    {item.active ? <span> (current)</span> : null}
                 </li>
             )
         
         case "chat":
             return (
-                <li key = "Chat">Chat
-                    <ul>
+                <li key = "Chat" className="mt-4">
+                    <p className="px-3 pb-1 text-sm font-semibold text-gray-600">Chats</p>
+                    <ul className="space-y-1">
                        {item.chats.map((chat) => (
                         <li key={chat.link}>
-                            <a href={chat.link} aria-current={chat.active ? "page" : undefined}>
+                            <a
+                                href={chat.link}
+                                aria-current={chat.active ? "page" : undefined}
+                                className={[
+                                    "block rounded-md px-3 py-2 border",
+                                    chat.active
+                                        ? "border-blue-300 bg-blue-50 text-blue-800 font-semibold"
+                                        : "border-transparent hover:bg-gray-100",
+                                ].join(" ")}
+                            >
                                 {chat.name}
                             </a>
-                            {chat.active ? <span> (current)</span> : null}
                         </li>
                        ))}
                     </ul>

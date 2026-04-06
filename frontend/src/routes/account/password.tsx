@@ -8,13 +8,15 @@ export const Route = createFileRoute('/account/password')({
 function AccountPassword() {
   const items: NavItem[] = [
     { kind: 'page', name: 'Account', link: '/account', active: true },
+    { kind: 'page', name: 'Chats', link: '/chats' },
     { kind: 'chat', chats: [] },
   ]
 
   return (
-    <>
+    <div className="min-h-screen flex bg-gray-50">
       <NavBar items={items}></NavBar>
-      <main className="max-w-md mx-auto mt-10 px-4">
+      <main className="flex-1 p-8">
+        <div className="max-w-md">
         <h1 className="text-3xl font-bold mb-6">Update Password</h1>
 
         <form className="space-y-4 p-6 border rounded-lg bg-white shadow-sm">
@@ -61,7 +63,8 @@ function AccountPassword() {
             Update password
           </button>
         </form>
+        </div>
       </main>
-    </>
+    </div>
   )
 }

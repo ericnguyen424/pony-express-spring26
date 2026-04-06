@@ -12,8 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChatsIndexRouteImport } from './routes/chats/index'
+import { Route as AccountIndexRouteImport } from './routes/account/index'
+import { Route as ChatsChatIdRouteImport } from './routes/chats/$chatId'
 import { Route as ChatChatsRouteImport } from './routes/chat/chats'
 import { Route as ChatChat_idRouteImport } from './routes/chat/chat_id'
+import { Route as AccountSettingsRouteImport } from './routes/account/settings'
+import { Route as AccountPasswordRouteImport } from './routes/account/password'
 import { Route as AccountAccount_settingsRouteImport } from './routes/account/account_settings'
 import { Route as AccountAccount_passwordRouteImport } from './routes/account/account_password'
 import { Route as AccountAccountRouteImport } from './routes/account/account'
@@ -33,6 +38,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChatsIndexRoute = ChatsIndexRouteImport.update({
+  id: '/chats/',
+  path: '/chats/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/account/',
+  path: '/account/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatsChatIdRoute = ChatsChatIdRouteImport.update({
+  id: '/chats/$chatId',
+  path: '/chats/$chatId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChatChatsRoute = ChatChatsRouteImport.update({
   id: '/chat/chats',
   path: '/chat/chats',
@@ -41,6 +61,16 @@ const ChatChatsRoute = ChatChatsRouteImport.update({
 const ChatChat_idRoute = ChatChat_idRouteImport.update({
   id: '/chat/chat_id',
   path: '/chat/chat_id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountSettingsRoute = AccountSettingsRouteImport.update({
+  id: '/account/settings',
+  path: '/account/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountPasswordRoute = AccountPasswordRouteImport.update({
+  id: '/account/password',
+  path: '/account/password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountAccount_settingsRoute = AccountAccount_settingsRouteImport.update({
@@ -66,8 +96,13 @@ export interface FileRoutesByFullPath {
   '/account/account': typeof AccountAccountRoute
   '/account/account_password': typeof AccountAccount_passwordRoute
   '/account/account_settings': typeof AccountAccount_settingsRoute
+  '/account/password': typeof AccountPasswordRoute
+  '/account/settings': typeof AccountSettingsRoute
   '/chat/chat_id': typeof ChatChat_idRoute
   '/chat/chats': typeof ChatChatsRoute
+  '/chats/$chatId': typeof ChatsChatIdRoute
+  '/account/': typeof AccountIndexRoute
+  '/chats/': typeof ChatsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,8 +111,13 @@ export interface FileRoutesByTo {
   '/account/account': typeof AccountAccountRoute
   '/account/account_password': typeof AccountAccount_passwordRoute
   '/account/account_settings': typeof AccountAccount_settingsRoute
+  '/account/password': typeof AccountPasswordRoute
+  '/account/settings': typeof AccountSettingsRoute
   '/chat/chat_id': typeof ChatChat_idRoute
   '/chat/chats': typeof ChatChatsRoute
+  '/chats/$chatId': typeof ChatsChatIdRoute
+  '/account': typeof AccountIndexRoute
+  '/chats': typeof ChatsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,8 +127,13 @@ export interface FileRoutesById {
   '/account/account': typeof AccountAccountRoute
   '/account/account_password': typeof AccountAccount_passwordRoute
   '/account/account_settings': typeof AccountAccount_settingsRoute
+  '/account/password': typeof AccountPasswordRoute
+  '/account/settings': typeof AccountSettingsRoute
   '/chat/chat_id': typeof ChatChat_idRoute
   '/chat/chats': typeof ChatChatsRoute
+  '/chats/$chatId': typeof ChatsChatIdRoute
+  '/account/': typeof AccountIndexRoute
+  '/chats/': typeof ChatsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -99,8 +144,13 @@ export interface FileRouteTypes {
     | '/account/account'
     | '/account/account_password'
     | '/account/account_settings'
+    | '/account/password'
+    | '/account/settings'
     | '/chat/chat_id'
     | '/chat/chats'
+    | '/chats/$chatId'
+    | '/account/'
+    | '/chats/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -109,8 +159,13 @@ export interface FileRouteTypes {
     | '/account/account'
     | '/account/account_password'
     | '/account/account_settings'
+    | '/account/password'
+    | '/account/settings'
     | '/chat/chat_id'
     | '/chat/chats'
+    | '/chats/$chatId'
+    | '/account'
+    | '/chats'
   id:
     | '__root__'
     | '/'
@@ -119,8 +174,13 @@ export interface FileRouteTypes {
     | '/account/account'
     | '/account/account_password'
     | '/account/account_settings'
+    | '/account/password'
+    | '/account/settings'
     | '/chat/chat_id'
     | '/chat/chats'
+    | '/chats/$chatId'
+    | '/account/'
+    | '/chats/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -130,8 +190,13 @@ export interface RootRouteChildren {
   AccountAccountRoute: typeof AccountAccountRoute
   AccountAccount_passwordRoute: typeof AccountAccount_passwordRoute
   AccountAccount_settingsRoute: typeof AccountAccount_settingsRoute
+  AccountPasswordRoute: typeof AccountPasswordRoute
+  AccountSettingsRoute: typeof AccountSettingsRoute
   ChatChat_idRoute: typeof ChatChat_idRoute
   ChatChatsRoute: typeof ChatChatsRoute
+  ChatsChatIdRoute: typeof ChatsChatIdRoute
+  AccountIndexRoute: typeof AccountIndexRoute
+  ChatsIndexRoute: typeof ChatsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -157,6 +222,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/chats/': {
+      id: '/chats/'
+      path: '/chats'
+      fullPath: '/chats/'
+      preLoaderRoute: typeof ChatsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/': {
+      id: '/account/'
+      path: '/account'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chats/$chatId': {
+      id: '/chats/$chatId'
+      path: '/chats/$chatId'
+      fullPath: '/chats/$chatId'
+      preLoaderRoute: typeof ChatsChatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chat/chats': {
       id: '/chat/chats'
       path: '/chat/chats'
@@ -169,6 +255,20 @@ declare module '@tanstack/react-router' {
       path: '/chat/chat_id'
       fullPath: '/chat/chat_id'
       preLoaderRoute: typeof ChatChat_idRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/settings': {
+      id: '/account/settings'
+      path: '/account/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AccountSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/password': {
+      id: '/account/password'
+      path: '/account/password'
+      fullPath: '/account/password'
+      preLoaderRoute: typeof AccountPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/account_settings': {
@@ -202,8 +302,13 @@ const rootRouteChildren: RootRouteChildren = {
   AccountAccountRoute: AccountAccountRoute,
   AccountAccount_passwordRoute: AccountAccount_passwordRoute,
   AccountAccount_settingsRoute: AccountAccount_settingsRoute,
+  AccountPasswordRoute: AccountPasswordRoute,
+  AccountSettingsRoute: AccountSettingsRoute,
   ChatChat_idRoute: ChatChat_idRoute,
   ChatChatsRoute: ChatChatsRoute,
+  ChatsChatIdRoute: ChatsChatIdRoute,
+  AccountIndexRoute: AccountIndexRoute,
+  ChatsIndexRoute: ChatsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

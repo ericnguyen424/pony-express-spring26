@@ -8,16 +8,19 @@ export const Route = createFileRoute("/")( {
 function Index() {
     const items: NavItem[] = [
         {kind : "page", name: "Account", link: "/account"}, 
+        {kind : "page", name: "Chats", link: "/chats"},
         {kind : "chat", chats: []}
     ]
 
     return (
-        <>
-        <NavBar items = {items}></NavBar>
-        <div>
-            <h1>Pony Express</h1>
-            <p>This is a messaging application that allows you to create chats</p>
+        <div className="min-h-screen flex bg-gray-50">
+            <NavBar items = {items}></NavBar>
+            <main className="flex-1 p-8">
+                <div className="max-w-3xl">
+                    <h1 className="text-3xl font-bold mb-4">Pony Express</h1>
+                    <p>This is a messaging application that allows you to create chats</p>
+                </div>
+            </main>
         </div>
-        </>
     )
 }

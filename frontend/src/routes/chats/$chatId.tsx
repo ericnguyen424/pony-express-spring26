@@ -21,6 +21,10 @@ function ChatDetails() {
     { name: 'Project', link: '/chats/project' },
   ]
 
+  if (!chatLinks.some((chat) => chat.link === `/chats/${chatId}`)) {
+    chatLinks.push({ name: chatId, link: `/chats/${chatId}` })
+  }
+
   const items: NavItem[] = [
     { kind: 'page', name: 'Account', link: '/account' },
     { kind: 'page', name: 'Chats', link: '/chats' },
@@ -69,13 +73,14 @@ function ChatDetails() {
   )
 
   return (
-    <>
+    <div className="min-h-screen flex bg-gray-50">
       <NavBar items={items}></NavBar>
 
-      <main className="max-w-2xl mx-auto mt-10 px-4">
+      <main className="flex-1 p-8 min-w-0">
+        <div className="max-w-3xl">
         <h1 className="text-3xl font-bold mb-6">Chat: {chatId}</h1>
 
-        <section className="border rounded-lg bg-white shadow-sm max-h-[70vh] overflow-y-auto">
+        <section className="border rounded-lg bg-white shadow-sm h-[calc(100vh-10rem)] overflow-y-auto">
           <ul className="divide-y">
             {sortedMessages.map((message) => (
               <li key={message.id} className="p-4 space-y-1">
@@ -92,7 +97,8 @@ function ChatDetails() {
             ))}
           </ul>
         </section>
+        </div>
       </main>
-    </>
+    </div>
   )
 }
