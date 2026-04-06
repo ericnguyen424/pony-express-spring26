@@ -1,7 +1,12 @@
 {
+  "exclude": [
+    "dist/",
+    "examples/"
+  ],
   "tasks": {
     "dev": "deno run -A --node-modules-dir npm:vite",
     "build": "deno run -A --node-modules-dir npm:vite build",
+    "typecheck": "deno check --sloppy-imports src/main.tsx",
     "preview": "deno run -A --node-modules-dir npm:vite preview",
     "serve": "deno run --allow-net --allow-read jsr:@std/http@1/file-server dist/"
   },
@@ -10,6 +15,13 @@
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "jsxImportSourceTypes": "@types/react"
+  },
+  "lint": {
+    "exclude": [
+      "examples/",
+      "src/routeTree.gen.ts",
+      "**/routeTree.gen.ts"
+    ]
   },
   "imports": {
     "@deno/vite-plugin": "npm:@deno/vite-plugin@^1.0.5",
@@ -29,5 +41,4 @@
     "tailwindcss": "npm:tailwindcss@^4.2.1",
     "vite": "npm:vite@^7.3.1"
   }
-  
 }

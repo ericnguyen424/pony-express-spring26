@@ -8,244 +8,244 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as LayoutBRouteRouteImport } from './routes/_layoutB/route'
-import { Route as LayoutARouteRouteImport } from './routes/_layoutA/route'
-import { Route as LayoutBIndexRouteImport } from './routes/_layoutB/index'
-import { Route as LayoutBPetNameRouteImport } from './routes/_layoutB/pet-name'
-import { Route as LayoutBHelloWorldRouteImport } from './routes/_layoutB/hello-world'
-import { Route as LayoutBColorsRouteImport } from './routes/_layoutB/colors'
-import { Route as LayoutARegisterRouteImport } from './routes/_layoutA/register'
-import { Route as LayoutBPetsRouteRouteImport } from './routes/_layoutB/pets/route'
-import { Route as LayoutBPetsIndexRouteImport } from './routes/_layoutB/pets/index'
-import { Route as LayoutBPetsNameRouteImport } from './routes/_layoutB/pets/$name'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as LayoutBRouteRouteImport } from "./routes/_layoutB/route";
+import { Route as LayoutARouteRouteImport } from "./routes/_layoutA/route";
+import { Route as LayoutBIndexRouteImport } from "./routes/_layoutB/index";
+import { Route as LayoutBPetNameRouteImport } from "./routes/_layoutB/pet-name";
+import { Route as LayoutBHelloWorldRouteImport } from "./routes/_layoutB/hello-world";
+import { Route as LayoutBColorsRouteImport } from "./routes/_layoutB/colors";
+import { Route as LayoutARegisterRouteImport } from "./routes/_layoutA/register";
+import { Route as LayoutBPetsRouteRouteImport } from "./routes/_layoutB/pets/route";
+import { Route as LayoutBPetsIndexRouteImport } from "./routes/_layoutB/pets/index";
+import { Route as LayoutBPetsNameRouteImport } from "./routes/_layoutB/pets/$name";
 
 const LayoutBRouteRoute = LayoutBRouteRouteImport.update({
-  id: '/_layoutB',
+  id: "/_layoutB",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const LayoutARouteRoute = LayoutARouteRouteImport.update({
-  id: '/_layoutA',
+  id: "/_layoutA",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const LayoutBIndexRoute = LayoutBIndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => LayoutBRouteRoute,
-} as any)
+} as any);
 const LayoutBPetNameRoute = LayoutBPetNameRouteImport.update({
-  id: '/pet-name',
-  path: '/pet-name',
+  id: "/pet-name",
+  path: "/pet-name",
   getParentRoute: () => LayoutBRouteRoute,
-} as any)
+} as any);
 const LayoutBHelloWorldRoute = LayoutBHelloWorldRouteImport.update({
-  id: '/hello-world',
-  path: '/hello-world',
+  id: "/hello-world",
+  path: "/hello-world",
   getParentRoute: () => LayoutBRouteRoute,
-} as any)
+} as any);
 const LayoutBColorsRoute = LayoutBColorsRouteImport.update({
-  id: '/colors',
-  path: '/colors',
+  id: "/colors",
+  path: "/colors",
   getParentRoute: () => LayoutBRouteRoute,
-} as any)
+} as any);
 const LayoutARegisterRoute = LayoutARegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
+  id: "/register",
+  path: "/register",
   getParentRoute: () => LayoutARouteRoute,
-} as any)
+} as any);
 const LayoutBPetsRouteRoute = LayoutBPetsRouteRouteImport.update({
-  id: '/pets',
-  path: '/pets',
+  id: "/pets",
+  path: "/pets",
   getParentRoute: () => LayoutBRouteRoute,
-} as any)
+} as any);
 const LayoutBPetsIndexRoute = LayoutBPetsIndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => LayoutBPetsRouteRoute,
-} as any)
+} as any);
 const LayoutBPetsNameRoute = LayoutBPetsNameRouteImport.update({
-  id: '/$name',
-  path: '/$name',
+  id: "/$name",
+  path: "/$name",
   getParentRoute: () => LayoutBPetsRouteRoute,
-} as any)
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof LayoutBIndexRoute
-  '/pets': typeof LayoutBPetsRouteRouteWithChildren
-  '/register': typeof LayoutARegisterRoute
-  '/colors': typeof LayoutBColorsRoute
-  '/hello-world': typeof LayoutBHelloWorldRoute
-  '/pet-name': typeof LayoutBPetNameRoute
-  '/pets/$name': typeof LayoutBPetsNameRoute
-  '/pets/': typeof LayoutBPetsIndexRoute
+  "/": typeof LayoutBIndexRoute;
+  "/pets": typeof LayoutBPetsRouteRouteWithChildren;
+  "/register": typeof LayoutARegisterRoute;
+  "/colors": typeof LayoutBColorsRoute;
+  "/hello-world": typeof LayoutBHelloWorldRoute;
+  "/pet-name": typeof LayoutBPetNameRoute;
+  "/pets/$name": typeof LayoutBPetsNameRoute;
+  "/pets/": typeof LayoutBPetsIndexRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof LayoutBIndexRoute
-  '/register': typeof LayoutARegisterRoute
-  '/colors': typeof LayoutBColorsRoute
-  '/hello-world': typeof LayoutBHelloWorldRoute
-  '/pet-name': typeof LayoutBPetNameRoute
-  '/pets/$name': typeof LayoutBPetsNameRoute
-  '/pets': typeof LayoutBPetsIndexRoute
+  "/": typeof LayoutBIndexRoute;
+  "/register": typeof LayoutARegisterRoute;
+  "/colors": typeof LayoutBColorsRoute;
+  "/hello-world": typeof LayoutBHelloWorldRoute;
+  "/pet-name": typeof LayoutBPetNameRoute;
+  "/pets/$name": typeof LayoutBPetsNameRoute;
+  "/pets": typeof LayoutBPetsIndexRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/_layoutA': typeof LayoutARouteRouteWithChildren
-  '/_layoutB': typeof LayoutBRouteRouteWithChildren
-  '/_layoutB/pets': typeof LayoutBPetsRouteRouteWithChildren
-  '/_layoutA/register': typeof LayoutARegisterRoute
-  '/_layoutB/colors': typeof LayoutBColorsRoute
-  '/_layoutB/hello-world': typeof LayoutBHelloWorldRoute
-  '/_layoutB/pet-name': typeof LayoutBPetNameRoute
-  '/_layoutB/': typeof LayoutBIndexRoute
-  '/_layoutB/pets/$name': typeof LayoutBPetsNameRoute
-  '/_layoutB/pets/': typeof LayoutBPetsIndexRoute
+  __root__: typeof rootRouteImport;
+  "/_layoutA": typeof LayoutARouteRouteWithChildren;
+  "/_layoutB": typeof LayoutBRouteRouteWithChildren;
+  "/_layoutB/pets": typeof LayoutBPetsRouteRouteWithChildren;
+  "/_layoutA/register": typeof LayoutARegisterRoute;
+  "/_layoutB/colors": typeof LayoutBColorsRoute;
+  "/_layoutB/hello-world": typeof LayoutBHelloWorldRoute;
+  "/_layoutB/pet-name": typeof LayoutBPetNameRoute;
+  "/_layoutB/": typeof LayoutBIndexRoute;
+  "/_layoutB/pets/$name": typeof LayoutBPetsNameRoute;
+  "/_layoutB/pets/": typeof LayoutBPetsIndexRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    | '/'
-    | '/pets'
-    | '/register'
-    | '/colors'
-    | '/hello-world'
-    | '/pet-name'
-    | '/pets/$name'
-    | '/pets/'
-  fileRoutesByTo: FileRoutesByTo
+    | "/"
+    | "/pets"
+    | "/register"
+    | "/colors"
+    | "/hello-world"
+    | "/pet-name"
+    | "/pets/$name"
+    | "/pets/";
+  fileRoutesByTo: FileRoutesByTo;
   to:
-    | '/'
-    | '/register'
-    | '/colors'
-    | '/hello-world'
-    | '/pet-name'
-    | '/pets/$name'
-    | '/pets'
+    | "/"
+    | "/register"
+    | "/colors"
+    | "/hello-world"
+    | "/pet-name"
+    | "/pets/$name"
+    | "/pets";
   id:
-    | '__root__'
-    | '/_layoutA'
-    | '/_layoutB'
-    | '/_layoutB/pets'
-    | '/_layoutA/register'
-    | '/_layoutB/colors'
-    | '/_layoutB/hello-world'
-    | '/_layoutB/pet-name'
-    | '/_layoutB/'
-    | '/_layoutB/pets/$name'
-    | '/_layoutB/pets/'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/_layoutA"
+    | "/_layoutB"
+    | "/_layoutB/pets"
+    | "/_layoutA/register"
+    | "/_layoutB/colors"
+    | "/_layoutB/hello-world"
+    | "/_layoutB/pet-name"
+    | "/_layoutB/"
+    | "/_layoutB/pets/$name"
+    | "/_layoutB/pets/";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  LayoutARouteRoute: typeof LayoutARouteRouteWithChildren
-  LayoutBRouteRoute: typeof LayoutBRouteRouteWithChildren
+  LayoutARouteRoute: typeof LayoutARouteRouteWithChildren;
+  LayoutBRouteRoute: typeof LayoutBRouteRouteWithChildren;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/_layoutB': {
-      id: '/_layoutB'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof LayoutBRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_layoutA': {
-      id: '/_layoutA'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof LayoutARouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_layoutB/': {
-      id: '/_layoutB/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof LayoutBIndexRouteImport
-      parentRoute: typeof LayoutBRouteRoute
-    }
-    '/_layoutB/pet-name': {
-      id: '/_layoutB/pet-name'
-      path: '/pet-name'
-      fullPath: '/pet-name'
-      preLoaderRoute: typeof LayoutBPetNameRouteImport
-      parentRoute: typeof LayoutBRouteRoute
-    }
-    '/_layoutB/hello-world': {
-      id: '/_layoutB/hello-world'
-      path: '/hello-world'
-      fullPath: '/hello-world'
-      preLoaderRoute: typeof LayoutBHelloWorldRouteImport
-      parentRoute: typeof LayoutBRouteRoute
-    }
-    '/_layoutB/colors': {
-      id: '/_layoutB/colors'
-      path: '/colors'
-      fullPath: '/colors'
-      preLoaderRoute: typeof LayoutBColorsRouteImport
-      parentRoute: typeof LayoutBRouteRoute
-    }
-    '/_layoutA/register': {
-      id: '/_layoutA/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof LayoutARegisterRouteImport
-      parentRoute: typeof LayoutARouteRoute
-    }
-    '/_layoutB/pets': {
-      id: '/_layoutB/pets'
-      path: '/pets'
-      fullPath: '/pets'
-      preLoaderRoute: typeof LayoutBPetsRouteRouteImport
-      parentRoute: typeof LayoutBRouteRoute
-    }
-    '/_layoutB/pets/': {
-      id: '/_layoutB/pets/'
-      path: '/'
-      fullPath: '/pets/'
-      preLoaderRoute: typeof LayoutBPetsIndexRouteImport
-      parentRoute: typeof LayoutBPetsRouteRoute
-    }
-    '/_layoutB/pets/$name': {
-      id: '/_layoutB/pets/$name'
-      path: '/$name'
-      fullPath: '/pets/$name'
-      preLoaderRoute: typeof LayoutBPetsNameRouteImport
-      parentRoute: typeof LayoutBPetsRouteRoute
-    }
+    "/_layoutB": {
+      id: "/_layoutB";
+      path: "";
+      fullPath: "/";
+      preLoaderRoute: typeof LayoutBRouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_layoutA": {
+      id: "/_layoutA";
+      path: "";
+      fullPath: "/";
+      preLoaderRoute: typeof LayoutARouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_layoutB/": {
+      id: "/_layoutB/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof LayoutBIndexRouteImport;
+      parentRoute: typeof LayoutBRouteRoute;
+    };
+    "/_layoutB/pet-name": {
+      id: "/_layoutB/pet-name";
+      path: "/pet-name";
+      fullPath: "/pet-name";
+      preLoaderRoute: typeof LayoutBPetNameRouteImport;
+      parentRoute: typeof LayoutBRouteRoute;
+    };
+    "/_layoutB/hello-world": {
+      id: "/_layoutB/hello-world";
+      path: "/hello-world";
+      fullPath: "/hello-world";
+      preLoaderRoute: typeof LayoutBHelloWorldRouteImport;
+      parentRoute: typeof LayoutBRouteRoute;
+    };
+    "/_layoutB/colors": {
+      id: "/_layoutB/colors";
+      path: "/colors";
+      fullPath: "/colors";
+      preLoaderRoute: typeof LayoutBColorsRouteImport;
+      parentRoute: typeof LayoutBRouteRoute;
+    };
+    "/_layoutA/register": {
+      id: "/_layoutA/register";
+      path: "/register";
+      fullPath: "/register";
+      preLoaderRoute: typeof LayoutARegisterRouteImport;
+      parentRoute: typeof LayoutARouteRoute;
+    };
+    "/_layoutB/pets": {
+      id: "/_layoutB/pets";
+      path: "/pets";
+      fullPath: "/pets";
+      preLoaderRoute: typeof LayoutBPetsRouteRouteImport;
+      parentRoute: typeof LayoutBRouteRoute;
+    };
+    "/_layoutB/pets/": {
+      id: "/_layoutB/pets/";
+      path: "/";
+      fullPath: "/pets/";
+      preLoaderRoute: typeof LayoutBPetsIndexRouteImport;
+      parentRoute: typeof LayoutBPetsRouteRoute;
+    };
+    "/_layoutB/pets/$name": {
+      id: "/_layoutB/pets/$name";
+      path: "/$name";
+      fullPath: "/pets/$name";
+      preLoaderRoute: typeof LayoutBPetsNameRouteImport;
+      parentRoute: typeof LayoutBPetsRouteRoute;
+    };
   }
 }
 
 interface LayoutARouteRouteChildren {
-  LayoutARegisterRoute: typeof LayoutARegisterRoute
+  LayoutARegisterRoute: typeof LayoutARegisterRoute;
 }
 
 const LayoutARouteRouteChildren: LayoutARouteRouteChildren = {
   LayoutARegisterRoute: LayoutARegisterRoute,
-}
+};
 
 const LayoutARouteRouteWithChildren = LayoutARouteRoute._addFileChildren(
   LayoutARouteRouteChildren,
-)
+);
 
 interface LayoutBPetsRouteRouteChildren {
-  LayoutBPetsNameRoute: typeof LayoutBPetsNameRoute
-  LayoutBPetsIndexRoute: typeof LayoutBPetsIndexRoute
+  LayoutBPetsNameRoute: typeof LayoutBPetsNameRoute;
+  LayoutBPetsIndexRoute: typeof LayoutBPetsIndexRoute;
 }
 
 const LayoutBPetsRouteRouteChildren: LayoutBPetsRouteRouteChildren = {
   LayoutBPetsNameRoute: LayoutBPetsNameRoute,
   LayoutBPetsIndexRoute: LayoutBPetsIndexRoute,
-}
+};
 
-const LayoutBPetsRouteRouteWithChildren =
-  LayoutBPetsRouteRoute._addFileChildren(LayoutBPetsRouteRouteChildren)
+const LayoutBPetsRouteRouteWithChildren = LayoutBPetsRouteRoute
+  ._addFileChildren(LayoutBPetsRouteRouteChildren);
 
 interface LayoutBRouteRouteChildren {
-  LayoutBPetsRouteRoute: typeof LayoutBPetsRouteRouteWithChildren
-  LayoutBColorsRoute: typeof LayoutBColorsRoute
-  LayoutBHelloWorldRoute: typeof LayoutBHelloWorldRoute
-  LayoutBPetNameRoute: typeof LayoutBPetNameRoute
-  LayoutBIndexRoute: typeof LayoutBIndexRoute
+  LayoutBPetsRouteRoute: typeof LayoutBPetsRouteRouteWithChildren;
+  LayoutBColorsRoute: typeof LayoutBColorsRoute;
+  LayoutBHelloWorldRoute: typeof LayoutBHelloWorldRoute;
+  LayoutBPetNameRoute: typeof LayoutBPetNameRoute;
+  LayoutBIndexRoute: typeof LayoutBIndexRoute;
 }
 
 const LayoutBRouteRouteChildren: LayoutBRouteRouteChildren = {
@@ -254,16 +254,16 @@ const LayoutBRouteRouteChildren: LayoutBRouteRouteChildren = {
   LayoutBHelloWorldRoute: LayoutBHelloWorldRoute,
   LayoutBPetNameRoute: LayoutBPetNameRoute,
   LayoutBIndexRoute: LayoutBIndexRoute,
-}
+};
 
 const LayoutBRouteRouteWithChildren = LayoutBRouteRoute._addFileChildren(
   LayoutBRouteRouteChildren,
-)
+);
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutARouteRoute: LayoutARouteRouteWithChildren,
   LayoutBRouteRoute: LayoutBRouteRouteWithChildren,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();

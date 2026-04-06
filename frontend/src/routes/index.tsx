@@ -1,25 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
-import NavBar, { type NavItem } from "../../components/navbar";
+import NavBar, { type NavItem } from "../../components/navbar.tsx";
 
-export const Route = createFileRoute("/")( {
-    component: Index
+export const Route = createFileRoute("/")({
+  component: Index,
 });
 
 function Index() {
-    const items: NavItem[] = [
-        {kind : "page", name: "Account", link: "/account"}, 
-        {kind : "chat", name: "Chats", link: "/chats", chats: []}
-    ]
+  const items: NavItem[] = [
+    { kind: "page", name: "Account", link: "/account" },
+    { kind: "chat", name: "Chats", link: "/chats", chats: [] },
+  ];
 
-    return (
-        <div className="min-h-screen flex bg-gray-50">
-            <NavBar items = {items}></NavBar>
-            <main className="flex-1 p-8">
-                <div className="max-w-3xl">
-                    <h1 className="text-3xl font-bold mb-4">Pony Express</h1>
-                    <p>This is a messaging application that allows you to create chats</p>
-                </div>
-            </main>
+  return (
+    <div className="min-h-screen flex bg-gray-50">
+      <NavBar items={items}></NavBar>
+      <main className="flex-1 p-8">
+        <div className="max-w-3xl">
+          <h1 className="text-3xl font-bold mb-4">Pony Express</h1>
+          <p>This is a messaging application that allows you to create chats</p>
         </div>
-    )
+      </main>
+    </div>
+  );
 }
