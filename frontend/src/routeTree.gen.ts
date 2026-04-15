@@ -8,15 +8,15 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root.tsx'
-import { Route as RegisterRouteImport } from './routes/register.tsx'
-import { Route as LoginRouteImport } from './routes/login.tsx'
-import { Route as IndexRouteImport } from './routes/index.tsx'
-import { Route as ChatsIndexRouteImport } from './routes/chats/index.tsx'
-import { Route as AccountIndexRouteImport } from './routes/account/index.tsx'
-import { Route as ChatsChatIdRouteImport } from './routes/chats/$chatId.tsx'
-import { Route as AccountSettingsRouteImport } from './routes/account/settings.tsx'
-import { Route as AccountPasswordRouteImport } from './routes/account/password.tsx'
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChatsIndexRouteImport } from './routes/chats/index'
+import { Route as AccountIndexRouteImport } from './routes/account/index'
+import { Route as ChatsChatIdRouteImport } from './routes/chats/$chatId'
+import { Route as AccountSettingsRouteImport } from './routes/account/settings'
+import { Route as AccountPasswordRouteImport } from './routes/account/password'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api.ts";
 import { chatsQuery, chatMessagesWithAccountsQuery } from "../../query.ts";
+import type {} from "../../routeTree.gen.ts";
 import NavBar, { type NavItem } from "../../../components/navbar.tsx";
 
 export const Route = createFileRoute("/chats/$chatId")({

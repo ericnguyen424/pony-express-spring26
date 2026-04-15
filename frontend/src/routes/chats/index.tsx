@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { chatsQuery } from "../../query.ts";
 import type { ChatSort } from "../../types.ts";
+import type {} from "../../routeTree.gen.ts";
 import NavBar, { type NavItem } from "../../../components/navbar.tsx";
 
 export const Route = createFileRoute("/chats/")({
