@@ -1,13 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getChats } from "../../api.ts";
+import { useQuery } from "@tanstack/react-query";
+import { chatsQuery } from "../../query.ts";
+import type { ChatSort } from "../../types.ts";
 import NavBar, { type NavItem } from "../../../components/navbar.tsx";
 
 export const Route = createFileRoute("/chats/")({
+  validateSearch: (search: Record<string, unknown>): { sort: ChatSort } => ({
+    sort: search.sort === "name" ? "name" : "id",
+  }),
   component: Chats,
 });
 
 function Chats() {
-  const chats = getChats();
+  const { sort } = Route.useSearch();
+  const { data: chats = [] } = useQuery(chatsQuery(sort));
 
   const items: NavItem[] = [
     { kind: "page", name: "Account", link: "/account" },
