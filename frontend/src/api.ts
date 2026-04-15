@@ -14,19 +14,6 @@ import type {
 
 const baseUrl = "http://127.0.0.1:8000";
 
-export type ChatSummary = {
-  id: string;
-  name: string;
-};
-
-export type ChatMessage = {
-  id: string;
-  account_id: number | null;
-  username: string | null;
-  created_at: string;
-  text: string;
-};
-
 export class ApiError extends Error {
   status: number;
   details: unknown;
@@ -140,12 +127,4 @@ export async function fetchChatMembers(
 
   const data = await response.json() as ApiAccountsResponse;
   return data.accounts.map(toAccount);
-}
-
-export function getChats(): ChatSummary[] {
-  return [];
-}
-
-export function getMessagesForChat(_chatId: string): ChatMessage[] {
-  return [];
 }
