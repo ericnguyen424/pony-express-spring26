@@ -9,7 +9,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlmodel import Session, SQLModel, create_engine, text
 
-engine = create_engine("sqlite:///data/assign02_data.db", echo=True)
+engine = create_engine("sqlite:///data/development.db", echo=True)
 
 
 def initialize_database():
