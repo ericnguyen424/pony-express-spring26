@@ -1,0 +1,68 @@
+export type ChatSort = "id" | "name";
+export type AccountSort = "id" | "username";
+
+export interface ApiCollectionMetadata {
+	count: number;
+	sort: string;
+}
+
+export interface ApiChat {
+	id: number;
+	name: string;
+	owner_id: number;
+}
+
+export interface ApiChatsResponse {
+	metadata: ApiCollectionMetadata;
+	chats: ApiChat[];
+}
+
+export interface ApiMessage {
+	id: number;
+	text: string;
+	account_id: number;
+	chat_id: number;
+	created_at: string;
+}
+
+export interface ApiMessagesResponse {
+	metadata: ApiCollectionMetadata;
+	messages: ApiMessage[];
+}
+
+export interface ApiAccount {
+	id: number;
+	username: string;
+}
+
+export interface ApiAccountsResponse {
+	metadata: ApiCollectionMetadata;
+	accounts: ApiAccount[];
+}
+
+export interface Chat {
+	id: number;
+	name: string;
+	ownerId: number;
+}
+
+export interface Account {
+	id: number;
+	username: string;
+}
+
+export interface Message {
+	id: number;
+	text: string;
+	accountId: number;
+	chatId: number;
+	timestamp: Date;
+}
+
+export interface MessageWithAccount {
+	id: number;
+	text: string;
+	account: Account | null;
+	timestamp: Date;
+}
+

@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
+
 
 # Routers
 from app.routers.accounts import accounts_router
@@ -24,6 +26,13 @@ async def lifespan(_app: FastAPI):
 
 app: FastAPI = FastAPI(title="Pony Express API", lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True,
+)
 
 app.include_router(accounts_router)
 app.include_router(chat_router)
