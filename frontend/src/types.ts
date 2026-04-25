@@ -11,6 +11,12 @@ export interface LoginResponse {
 	token_type?: string;
 }
 
+export interface RegisterResponse {
+	id: number;
+	username: string;
+	email: string;
+}
+
 export interface RegisterRequest {
 	username: string;
 	email: string;
@@ -25,6 +31,12 @@ export interface UpdateAccountRequest {
 export interface UpdatePasswordRequest {
 	old_password: string;
 	new_password: string;
+}
+
+export interface MeResponse {
+	id: number;
+	username: string;
+	email: string;
 }
 
 export interface ApiCollectionMetadata {
@@ -75,6 +87,7 @@ export interface Chat {
 export interface Account {
 	id: number;
 	username: string;
+	email?: string;
 }
 
 export interface Message {

@@ -1,5 +1,10 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
+import { useMutation } from "@tanstack/react-query";
 import type { RouterContext } from "../router.ts";
+import { login as loginApi, register as registerApi } from "../api.ts";
+import { ErrorMessage } from "../../components/messages.tsx";
+import { useAuth } from "../hooks.ts";
 import NavBar, { type NavItem } from "../../components/navbar.tsx";
 
 export const Route = createFileRoute("/register")({
@@ -13,6 +18,73 @@ export const Route = createFileRoute("/register")({
 });
 
 function Register() {
+  const navigate = Route.useNavigate();
+  const { login } = useAuth();
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const registerMutation = useMutation({
+    mutationFn: registerApi,
+    onError: () => {
+      setErrorMessage("Username or email already exists.");
+    },
+  });
+
+  const tokenMutation = useMutation({
+    mutationFn: loginApi,
+    onSuccess: (data) => {
+      if (!data.access_token) {
+        setErrorMessage("Unable to log in new account.");
+        return;
+      }
+
+      login(data.access_token);
+      setErrorMessage("");
+      navigate({ to: "/" });
+    },
+    onError: () => {
+      setErrorMessage("Unable to log in new account.");
+    },
+  });
+
+  const passwordsDoNotMatch =
+    password.length > 0 &&
+    confirmPassword.length > 0 &&
+    password !== confirmPassword;
+
+  const canSubmit =
+    username.trim().length > 0 &&
+    email.trim().length > 0 &&
+    password.length > 0 &&
+    confirmPassword.length > 0 &&
+    !passwordsDoNotMatch;
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!canSubmit || registerMutation.isPending || tokenMutation.isPending) {
+      return;
+    }
+
+    setErrorMessage("");
+    try {
+      await registerMutation.mutateAsync({
+        username: username.trim(),
+        email: email.trim(),
+        password,
+      });
+
+      await tokenMutation.mutateAsync({
+        username: username.trim(),
+        password,
+      });
+    } catch {
+      // errors are handled in mutation callbacks
+    }
+  };
+
   const items: NavItem[] = [
     { kind: "page", name: "Login", link: "/login" },
     { kind: "page", name: "Register", link: "/register", active: true },
@@ -26,7 +98,16 @@ function Register() {
         <div className="max-w-md">
           <h1 className="text-3xl font-bold mb-6">Register</h1>
 
-          <form className="space-y-4 p-6 border rounded-lg bg-white shadow-sm">
+          <form
+            className="space-y-4 p-6 border rounded-lg bg-white shadow-sm"
+            onSubmit={handleSubmit}
+          >
+            <ErrorMessage
+              message={passwordsDoNotMatch
+                ? "Passwords do not match."
+                : errorMessage}
+            />
+
             <div>
               <label
                 htmlFor="username"
@@ -39,6 +120,8 @@ function Register() {
                 name="username"
                 type="text"
                 className="w-full border rounded-md px-3 py-2"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
               />
             </div>
 
@@ -51,6 +134,8 @@ function Register() {
                 name="email"
                 type="text"
                 className="w-full border rounded-md px-3 py-2"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
               />
             </div>
 
@@ -66,6 +151,8 @@ function Register() {
                 name="password"
                 type="password"
                 className="w-full border rounded-md px-3 py-2"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
               />
             </div>
 
@@ -81,14 +168,19 @@ function Register() {
                 name="confirm-password"
                 type="password"
                 className="w-full border rounded-md px-3 py-2"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
               />
             </div>
 
             <button
               type="submit"
+              disabled={!canSubmit || registerMutation.isPending || tokenMutation.isPending}
               className="inline-flex items-center rounded-md bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700"
             >
-              Register
+              {registerMutation.isPending || tokenMutation.isPending
+                ? "Registering..."
+                : "Register"}
             </button>
           </form>
         </div>

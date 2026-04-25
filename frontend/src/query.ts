@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
+  fetchAccountMe,
   fetchChatMembers,
   fetchChatMessages,
   fetchChats,
@@ -46,5 +47,12 @@ export const chatMessagesWithAccountsQuery = (chatId: number) =>
         timestamp: message.timestamp,
       }));
     },
+    retry: 0,
+  });
+
+export const accountMeQuery = (token?: string) =>
+  queryOptions({
+    queryKey: ["accounts", "me", token ?? "cookie"],
+    queryFn: () => fetchAccountMe(token),
     retry: 0,
   });

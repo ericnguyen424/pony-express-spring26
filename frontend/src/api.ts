@@ -9,7 +9,14 @@ import type {
   ApiMessagesResponse,
   Chat,
   ChatSort,
+  LoginRequest,
+  LoginResponse,
   Message,
+  MeResponse,
+  RegisterRequest,
+  RegisterResponse,
+  UpdateAccountRequest,
+  UpdatePasswordRequest,
 } from "./types.ts";
 
 const baseUrl = "http://127.0.0.1:8000";
@@ -51,6 +58,17 @@ export async function handleApiError(response: Response): Promise<never> {
     : `HTTP ${response.status}`;
 
   throw new ApiError(detailMessage, response.status, payload);
+}
+
+function authHeaders(token?: string): HeadersInit {
+  if (!token) {
+    return { "Content-Type": "application/json" };
+  }
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
 }
 
 function toQueryString(params: Record<string, string | number | undefined>) {
@@ -127,4 +145,103 @@ export async function fetchChatMembers(
 
   const data = await response.json() as ApiAccountsResponse;
   return data.accounts.map(toAccount);
+}
+
+export async function login(loginRequest: LoginRequest): Promise<LoginResponse> {
+  const response = await fetch(`${baseUrl}/auth/tokens`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(loginRequest),
+  });
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
+
+  return await response.json() as LoginResponse;
+}
+
+export async function logout(): Promise<void> {
+  const response = await fetch(`${baseUrl}/auth/logins`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
+}
+
+export async function register(
+  registerRequest: RegisterRequest,
+): Promise<RegisterResponse> {
+  const response = await fetch(`${baseUrl}/auth/registrations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(registerRequest),
+  });
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
+
+  return await response.json() as RegisterResponse;
+}
+
+export async function fetchAccountMe(token?: string): Promise<Account> {
+  const response = await fetch(`${baseUrl}/accounts/me`, {
+    method: "GET",
+    headers: authHeaders(token),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
+
+  const account = await response.json() as MeResponse;
+  return {
+    id: account.id,
+    username: account.username,
+    email: account.email,
+  };
+}
+
+export async function updateAccount(
+  update: UpdateAccountRequest,
+  token?: string,
+): Promise<Account> {
+  const response = await fetch(`${baseUrl}/accounts/me`, {
+    method: "PATCH",
+    headers: authHeaders(token),
+    credentials: "include",
+    body: JSON.stringify(update),
+  });
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
+
+  const account = await response.json() as MeResponse;
+  return {
+    id: account.id,
+    username: account.username,
+    email: account.email,
+  };
+}
+
+export async function updateAccountPassword(
+  update: UpdatePasswordRequest,
+  token?: string,
+): Promise<void> {
+  const response = await fetch(`${baseUrl}/accounts/me/password`, {
+    method: "PUT",
+    headers: authHeaders(token),
+    credentials: "include",
+    body: JSON.stringify(update),
+  });
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
 }
