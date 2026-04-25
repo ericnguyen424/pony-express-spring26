@@ -10,7 +10,7 @@ export interface AuthContextType {
 const AUTH_STORAGE_KEY = "pony_express_auth";
 const AUTHENTICATION_SCHEME: "cookie" | "bearer" = "bearer";
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
