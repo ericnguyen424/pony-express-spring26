@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import type { RouterContext } from "../../router.ts";
 import { useQuery } from "@tanstack/react-query";
 import { chatsQuery } from "../../query.ts";
 import type { ChatSort } from "../../types.ts";
@@ -6,6 +7,12 @@ import type {} from "../../routeTree.gen.ts";
 import NavBar, { type NavItem } from "../../../components/navbar.tsx";
 
 export const Route = createFileRoute("/chats/")({
+  beforeLoad: async ({ context }) => {
+    const routerContext = context as RouterContext;
+    if (!routerContext.auth?.loggedIn) {
+      throw redirect({ to: "/login" });
+    }
+  },
   validateSearch: (search: Record<string, unknown>): { sort: ChatSort } => ({
     sort: search.sort === "name" ? "name" : "id",
   }),

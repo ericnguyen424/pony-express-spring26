@@ -1,7 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import type { RouterContext } from "../router.ts";
 import NavBar, { type NavItem } from "../../components/navbar.tsx";
 
 export const Route = createFileRoute("/login")({
+  beforeLoad: async ({ context }) => {
+    const routerContext = context as RouterContext;
+    if (routerContext.auth?.loggedIn) {
+      throw redirect({ to: "/" });
+    }
+  },
   component: Login,
 });
 

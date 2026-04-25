@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import type { RouterContext } from "../../router.ts";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api.ts";
 import { chatsQuery, chatMessagesWithAccountsQuery } from "../../query.ts";
@@ -6,6 +7,12 @@ import type {} from "../../routeTree.gen.ts";
 import NavBar, { type NavItem } from "../../../components/navbar.tsx";
 
 export const Route = createFileRoute("/chats/$chatId")({
+  beforeLoad: async ({ context }) => {
+    const routerContext = context as RouterContext;
+    if (!routerContext.auth?.loggedIn) {
+      throw redirect({ to: "/login" });
+    }
+  },
   component: ChatDetails,
 });
 
