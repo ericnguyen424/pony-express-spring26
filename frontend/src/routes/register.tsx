@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
 import type { RouterContext } from "../router.ts";
+import { ApiError } from "../api.ts";
 import { login as loginApi, register as registerApi } from "../api.ts";
 import { ErrorMessage } from "../../components/messages.tsx";
 import { useAuth } from "../hooks.ts";
@@ -26,10 +27,33 @@ function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  const toRegisterErrorMessage = (error: unknown) => {
+    if (!(error instanceof ApiError)) {
+      return "Unable to create account.";
+    }
+
+    if (error.status === 422) {
+      const details = error.details;
+
+      if (
+        typeof details === "object" &&
+        details !== null &&
+        "error" in details &&
+        (details as { error?: unknown }).error === "value_not_allowed"
+      ) {
+        return "Username or email already exists.";
+      }
+
+      return "Invalid registration values.";
+    }
+
+    return "Unable to create account.";
+  };
+
   const registerMutation = useMutation({
     mutationFn: registerApi,
-    onError: () => {
-      setErrorMessage("Username or email already exists.");
+    onError: (error) => {
+      setErrorMessage(toRegisterErrorMessage(error));
     },
   });
 
@@ -132,7 +156,7 @@ function Register() {
               <input
                 id="email"
                 name="email"
-                type="text"
+                type="email"
                 className="w-full border rounded-md px-3 py-2"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
