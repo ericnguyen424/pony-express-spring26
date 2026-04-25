@@ -45,7 +45,7 @@ function AccountPassword() {
     },
     onError: () => {
       setSuccessMessage("");
-      setErrorMessage("Unable to update password.");
+      setErrorMessage("Duplicate value.");
     },
   });
 

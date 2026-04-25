@@ -18,7 +18,7 @@ export const Route = createFileRoute("/account/")({
 
 function Account() {
   const navigate = Route.useNavigate();
-  const { logout } = useAuth();
+  const { logout, token } = useAuth();
   const {
     data: account,
     isPending,
@@ -26,7 +26,11 @@ function Account() {
   } = useAccount();
 
   const logoutMutation = useMutation({
-    mutationFn: logoutApi,
+    mutationFn: async () => {
+      if (!token) {
+        await logoutApi();
+      }
+    },
     onSettled: () => {
       logout();
       navigate({ to: "/login" });

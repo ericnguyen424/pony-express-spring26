@@ -71,6 +71,16 @@ function authHeaders(token?: string): HeadersInit {
   };
 }
 
+function toFormData(payload: Record<string, string>) {
+  const formData = new FormData();
+
+  for (const [key, value] of Object.entries(payload)) {
+    formData.append(key, value);
+  }
+
+  return formData;
+}
+
 function toQueryString(params: Record<string, string | number | undefined>) {
   const search = new URLSearchParams();
 
@@ -150,8 +160,10 @@ export async function fetchChatMembers(
 export async function login(loginRequest: LoginRequest): Promise<LoginResponse> {
   const response = await fetch(`${baseUrl}/auth/tokens`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(loginRequest),
+    body: toFormData({
+      username: loginRequest.username,
+      password: loginRequest.password,
+    }),
   });
 
   if (!response.ok) {
@@ -177,8 +189,11 @@ export async function register(
 ): Promise<RegisterResponse> {
   const response = await fetch(`${baseUrl}/auth/registrations`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(registerRequest),
+    body: toFormData({
+      username: registerRequest.username,
+      email: registerRequest.email,
+      password: registerRequest.password,
+    }),
   });
 
   if (!response.ok) {
@@ -234,11 +249,16 @@ export async function updateAccountPassword(
   update: UpdatePasswordRequest,
   token?: string,
 ): Promise<void> {
+  const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+
   const response = await fetch(`${baseUrl}/accounts/me/password`, {
     method: "PUT",
-    headers: authHeaders(token),
+    headers,
     credentials: "include",
-    body: JSON.stringify(update),
+    body: toFormData({
+      old_password: update.old_password,
+      new_password: update.new_password,
+    }),
   });
 
   if (!response.ok) {
