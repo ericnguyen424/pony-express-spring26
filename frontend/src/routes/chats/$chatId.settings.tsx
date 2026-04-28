@@ -2,7 +2,11 @@ import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RouterContext } from "../../router.ts";
-import { ApiError, updateChat } from "../../api.ts";
+import {
+  ApiError,
+  deleteChatMembership,
+  updateChat,
+} from "../../api.ts";
 import { useAccount, useAuth } from "../../hooks.ts";
 import { chatMembersQuery, chatsQuery } from "../../query.ts";
 import type { Chat } from "../../types.ts";
@@ -46,6 +50,7 @@ function ChatSettings() {
   const [chatName, setChatName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
 
   useEffect(() => {
     if (selectedChat) {
@@ -102,6 +107,7 @@ function ChatSettings() {
     onSuccess: async (updatedChat) => {
       setErrorMessage("");
       setSuccessMessage("Chat name updated.");
+      setActionMessage("");
 
       queryClient.setQueryData(["chats", "id"], (previous: Chat[] | undefined) =>
         upsertChat(previous, updatedChat)
@@ -117,6 +123,31 @@ function ChatSettings() {
     onError: (error) => {
       setSuccessMessage("");
       setErrorMessage(toUpdateChatError(error));
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: (memberId: number) =>
+      deleteChatMembership(parsedChatId, memberId, token ?? undefined),
+    onSuccess: async (_, memberId) => {
+      setErrorMessage("");
+      setSuccessMessage("");
+      setActionMessage("Member removed.");
+
+      await queryClient.invalidateQueries({
+        queryKey: ["chats", parsedChatId, "members", "username"],
+      });
+
+      if (account?.id === memberId) {
+        await queryClient.invalidateQueries({ queryKey: ["chats"] });
+        await queryClient.invalidateQueries({
+          queryKey: ["chats", parsedChatId, "messages"],
+        });
+      }
+    },
+    onError: () => {
+      setActionMessage("");
+      setErrorMessage("Unable to remove member.");
     },
   });
 
@@ -141,6 +172,18 @@ function ChatSettings() {
     chatName.trim().length > 0 &&
     chatName.trim() !== selectedChat.name &&
     !updateChatMutation.isPending;
+
+  const canRemoveMember = (memberId: number) => {
+    if (!account || !selectedChat) {
+      return false;
+    }
+
+    if (account.id === selectedChat.ownerId) {
+      return account.id !== memberId;
+    }
+
+    return account.id === memberId;
+  };
 
   const sortedMembers = useMemo(
     () =>
@@ -222,6 +265,7 @@ function ChatSettings() {
 
                   <ErrorMessage message={errorMessage} />
                   <SuccessMessage message={successMessage} />
+                  <SuccessMessage message={actionMessage} />
 
                   {isOwner
                     ? (
@@ -259,12 +303,26 @@ function ChatSettings() {
                             key={member.id}
                             className="px-4 py-3 flex items-center justify-between gap-3"
                           >
-                            <p className="font-medium">{member.username}</p>
-                            {selectedChat.ownerId === member.id
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{member.username}</p>
+                              {selectedChat.ownerId === member.id
+                                ? (
+                                  <span className="text-xs font-semibold text-blue-800 bg-blue-100 px-2 py-1 rounded-md">
+                                    owner
+                                  </span>
+                                )
+                                : null}
+                            </div>
+                            {canRemoveMember(member.id)
                               ? (
-                                <span className="text-xs font-semibold text-blue-800 bg-blue-100 px-2 py-1 rounded-md">
-                                  owner
-                                </span>
+                                <button
+                                  type="button"
+                                  disabled={removeMemberMutation.isPending}
+                                  className="inline-flex items-center rounded-md border border-red-300 text-red-700 px-3 py-1 font-medium hover:bg-red-50"
+                                  onClick={() => removeMemberMutation.mutate(member.id)}
+                                >
+                                  Remove
+                                </button>
                               )
                               : null}
                           </li>
@@ -272,9 +330,37 @@ function ChatSettings() {
                       </ul>
                     )
                     : (
-                      <p className="text-sm text-gray-600">
-                        Member list is visible to the chat owner only.
-                      </p>
+                      <ul className="divide-y border rounded-md">
+                        {sortedMembers.map((member) => (
+                          <li
+                            key={member.id}
+                            className="px-4 py-3 flex items-center justify-between gap-3"
+                          >
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{member.username}</p>
+                              {selectedChat.ownerId === member.id
+                                ? (
+                                  <span className="text-xs font-semibold text-blue-800 bg-blue-100 px-2 py-1 rounded-md">
+                                    owner
+                                  </span>
+                                )
+                                : null}
+                            </div>
+                            {canRemoveMember(member.id)
+                              ? (
+                                <button
+                                  type="button"
+                                  disabled={removeMemberMutation.isPending}
+                                  className="inline-flex items-center rounded-md border border-red-300 text-red-700 px-3 py-1 font-medium hover:bg-red-50"
+                                  onClick={() => removeMemberMutation.mutate(member.id)}
+                                >
+                                  Remove
+                                </button>
+                              )
+                              : null}
+                          </li>
+                        ))}
+                      </ul>
                     )}
                 </section>
               </>

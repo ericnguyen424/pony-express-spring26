@@ -247,6 +247,25 @@ export async function deleteChatMessage(
   }
 }
 
+export async function deleteChatMembership(
+  chatId: number,
+  accountId: number,
+  token?: string,
+): Promise<void> {
+  const response = await fetch(
+    `${baseUrl}/chats/${chatId}/accounts${toQueryString({ account_id: accountId })}`,
+    {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
+}
+
 export async function fetchChatMembers(
   chatId: number,
   sort: AccountSort = "id",
