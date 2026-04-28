@@ -33,6 +33,11 @@ export interface UpdatePasswordRequest {
 	new_password: string;
 }
 
+export interface CreateChatRequest {
+	name: string;
+	owner_id: number;
+}
+
 export interface MeResponse {
 	id: number;
 	username: string;

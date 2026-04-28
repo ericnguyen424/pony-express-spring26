@@ -9,6 +9,7 @@ import type {
   ApiMessagesResponse,
   Chat,
   ChatSort,
+  CreateChatRequest,
   LoginRequest,
   LoginResponse,
   Message,
@@ -128,6 +129,25 @@ export async function fetchChats(sort: ChatSort = "id"): Promise<Chat[]> {
 
   const data = await response.json() as ApiChatsResponse;
   return data.chats.map(toChat);
+}
+
+export async function createChat(
+  createRequest: CreateChatRequest,
+  token?: string,
+): Promise<Chat> {
+  const response = await fetch(`${baseUrl}/chats`, {
+    method: "POST",
+    headers: authHeaders(token),
+    credentials: "include",
+    body: JSON.stringify(createRequest),
+  });
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
+
+  const data = await response.json() as ApiChat;
+  return toChat(data);
 }
 
 export async function fetchChatMessages(chatId: number): Promise<Message[]> {

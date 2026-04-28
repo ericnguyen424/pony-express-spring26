@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import type { RouterContext } from "../../router.ts";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api.ts";
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/chats/$chatId")({
 
 function ChatDetails() {
   const { chatId } = Route.useParams();
+  const messageListRef = useRef<HTMLElement | null>(null);
   const parsedChatId = Number(chatId);
   const hasValidChatId = Number.isInteger(parsedChatId) && parsedChatId > 0;
 
@@ -61,6 +63,18 @@ function ChatDetails() {
       a.timestamp.getTime() - b.timestamp.getTime(),
   );
 
+  useEffect(() => {
+    if (!hasValidChatId || isLoading || isError || !messageListRef.current) {
+      return;
+    }
+
+    messageListRef.current.scrollTo({
+      top: messageListRef.current.scrollHeight,
+      left: 0,
+      behavior: "auto",
+    });
+  }, [hasValidChatId, isLoading, isError, sortedMessages.length]);
+
   const isNotFound =
     hasValidChatId && isError && error instanceof ApiError && error.status === 404;
 
@@ -72,7 +86,10 @@ function ChatDetails() {
         <div className="max-w-3xl">
           <h1 className="text-3xl font-bold mb-6">Chat: {chatId}</h1>
 
-          <section className="border rounded-lg bg-white shadow-sm h-[calc(100vh-10rem)] overflow-y-auto">
+          <section
+            ref={messageListRef}
+            className="border rounded-lg bg-white shadow-sm h-[calc(100vh-10rem)] overflow-y-auto"
+          >
             {hasValidChatId
               ? isLoading
                 ? <p className="p-4 text-gray-600">Loading messages...</p>
