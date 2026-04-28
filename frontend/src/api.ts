@@ -292,12 +292,50 @@ export async function deleteChatMembership(
   }
 }
 
+export async function addChatMembership(
+  chatId: number,
+  accountId: number,
+  token?: string,
+): Promise<void> {
+  const response = await fetch(
+    `${baseUrl}/chats/${chatId}/accounts${toQueryString({ account_id: accountId })}`,
+    {
+      method: "PUT",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
+}
+
 export async function fetchChatMembers(
   chatId: number,
   sort: AccountSort = "id",
 ): Promise<Account[]> {
   const response = await fetch(
     `${baseUrl}/chats/${chatId}/accounts${toQueryString({ sort })}`,
+    {
+      headers: authHeaders(),
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
+
+  const data = await response.json() as ApiAccountsResponse;
+  return data.accounts.map(toAccount);
+}
+
+export async function fetchAllAccounts(
+  sort: AccountSort = "id",
+): Promise<Account[]> {
+  const response = await fetch(
+    `${baseUrl}/accounts${toQueryString({ sort })}`,
     {
       headers: authHeaders(),
       credentials: "include",

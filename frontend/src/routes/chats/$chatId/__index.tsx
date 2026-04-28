@@ -1,24 +1,24 @@
-import { Link, createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import type { RouterContext } from "../../router.ts";
+import type { RouterContext } from "../../../router.ts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
   createChatMessage,
   deleteChatMessage,
   updateChatMessage,
-} from "../../api.ts";
-import { useAccount, useAuth } from "../../hooks.ts";
+} from "../../../api.ts";
+import { useAccount, useAuth } from "../../../hooks.ts";
 import {
   chatMembersQuery,
   chatsQuery,
   chatMessagesWithAccountsQuery,
-} from "../../query.ts";
-import type {} from "../../routeTree.gen.ts";
-import NavBar, { type NavItem } from "../../../components/navbar.tsx";
-import { ErrorMessage } from "../../../components/messages.tsx";
+} from "../../../query.ts";
+import type {} from "../../../routeTree.gen.ts";
+import NavBar, { type NavItem } from "../../../../components/navbar.tsx";
+import { ErrorMessage } from "../../../../components/messages.tsx";
 
-export const Route = createFileRoute("/chats/$chatId")({
+export const Route = createFileRoute("/chats/$chatId/__index")({
   beforeLoad: async ({ context }) => {
     const routerContext = context as RouterContext;
     if (!routerContext.auth?.loggedIn) {
@@ -29,6 +29,7 @@ export const Route = createFileRoute("/chats/$chatId")({
 });
 
 function ChatDetails() {
+  const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const { token } = useAuth();
   const { data: account } = useAccount();
@@ -215,13 +216,12 @@ function ChatDetails() {
             </h1>
             {isMember
               ? (
-                <Link
-                  to="/chats/$chatId/settings"
-                  params={{ chatId }}
-                  className="text-blue-700 underline"
+                <button
+                  onClick={() => navigate({ to: `/chats/${chatId}/settings` })}
+                  className="text-blue-700 underline cursor-pointer bg-none border-none p-0 font-inherit"
                 >
                   Settings
-                </Link>
+                </button>
               )
               : null}
           </div>

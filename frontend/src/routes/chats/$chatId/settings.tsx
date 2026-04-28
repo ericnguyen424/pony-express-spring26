@@ -1,18 +1,20 @@
 import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { RouterContext } from "../../router.ts";
+import type { RouterContext } from "../../../router.ts";
 import {
   ApiError,
   deleteChatMembership,
   updateChat,
-} from "../../api.ts";
-import { useAccount, useAuth } from "../../hooks.ts";
-import { chatMembersQuery, chatsQuery } from "../../query.ts";
-import type { Chat } from "../../types.ts";
-import type {} from "../../routeTree.gen.ts";
-import NavBar, { type NavItem } from "../../../components/navbar.tsx";
-import { ErrorMessage, SuccessMessage } from "../../../components/messages.tsx";
+  addChatMembership,
+  fetchAllAccounts,
+} from "../../../api.ts";
+import { useAccount, useAuth } from "../../../hooks.ts";
+import { chatMembersQuery, chatsQuery } from "../../../query.ts";
+import type { Chat } from "../../../types.ts";
+import type {} from "../../../routeTree.gen.ts";
+import NavBar, { type NavItem } from "../../../../components/navbar.tsx";
+import { ErrorMessage, SuccessMessage } from "../../../../components/messages.tsx";
 
 export const Route = createFileRoute("/chats/$chatId/settings")({
   beforeLoad: async ({ context }) => {
@@ -43,6 +45,12 @@ function ChatSettings() {
     enabled: hasValidChatId,
   });
 
+  const { data: allAccounts = [] } = useQuery({
+    queryKey: ["accounts"],
+    queryFn: () => fetchAllAccounts("username"),
+    staleTime: 60 * 1000, // 1 minute
+  });
+
   const selectedChat = chats.find((chat) => chat.id === parsedChatId);
   const isMember = !!account && members.some((member) => member.id === account.id);
   const isOwner = !!account && !!selectedChat && selectedChat.ownerId === account.id;
@@ -51,6 +59,7 @@ function ChatSettings() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [actionMessage, setActionMessage] = useState("");
+  const [addMemberUsername, setAddMemberUsername] = useState("");
 
   useEffect(() => {
     if (selectedChat) {
@@ -151,6 +160,29 @@ function ChatSettings() {
     },
   });
 
+  const addMemberMutation = useMutation({
+    mutationFn: (memberId: number) =>
+      addChatMembership(parsedChatId, memberId, token ?? undefined),
+    onSuccess: async () => {
+      setErrorMessage("");
+      setActionMessage("");
+      setSuccessMessage("Member added.");
+      setAddMemberUsername("");
+
+      await queryClient.invalidateQueries({
+        queryKey: ["chats", parsedChatId, "members", "username"],
+      });
+    },
+    onError: (error) => {
+      setSuccessMessage("");
+      if (error instanceof ApiError && error.status === 400) {
+        setErrorMessage("This member is already in the chat.");
+      } else {
+        setErrorMessage("Unable to add member.");
+      }
+    },
+  });
+
   const navItems: NavItem[] = [
     { kind: "page", name: "Account", link: "/account" },
     {
@@ -183,6 +215,30 @@ function ChatSettings() {
     }
 
     return account.id === memberId;
+  };
+
+  const handleAddMember = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!addMemberUsername.trim()) {
+      setErrorMessage("Please enter a username.");
+      return;
+    }
+
+    const userToAdd = allAccounts.find(
+      (a) => a.username.toLowerCase() === addMemberUsername.toLowerCase(),
+    );
+
+    if (!userToAdd) {
+      setErrorMessage("User not found.");
+      return;
+    }
+
+    if (members.some((m) => m.id === userToAdd.id)) {
+      setErrorMessage("This user is already a member of the chat.");
+      return;
+    }
+
+    addMemberMutation.mutate(userToAdd.id);
   };
 
   const sortedMembers = useMemo(
@@ -294,6 +350,27 @@ function ChatSettings() {
 
                 <section className="p-6 border rounded-lg bg-white shadow-sm space-y-4">
                   <h2 className="text-xl font-semibold">Chat members</h2>
+
+                  {isOwner
+                    ? (
+                      <form className="flex gap-2" onSubmit={handleAddMember}>
+                        <input
+                          type="text"
+                          placeholder="Enter username to add"
+                          className="flex-1 border rounded-md px-3 py-2"
+                          value={addMemberUsername}
+                          onChange={(event) => setAddMemberUsername(event.target.value)}
+                        />
+                        <button
+                          type="submit"
+                          disabled={addMemberMutation.isPending}
+                          className="inline-flex items-center rounded-md bg-green-600 text-white px-4 py-2 font-medium hover:bg-green-700"
+                        >
+                          {addMemberMutation.isPending ? "Adding..." : "Add"}
+                        </button>
+                      </form>
+                    )
+                    : null}
 
                   {isOwner
                     ? (
