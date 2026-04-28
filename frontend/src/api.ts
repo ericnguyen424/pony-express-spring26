@@ -10,6 +10,7 @@ import type {
   Chat,
   ChatSort,
   CreateChatRequest,
+  CreateMessageRequest,
   LoginRequest,
   LoginResponse,
   Message,
@@ -17,6 +18,8 @@ import type {
   RegisterRequest,
   RegisterResponse,
   UpdateAccountRequest,
+  UpdateChatRequest,
+  UpdateMessageRequest,
   UpdatePasswordRequest,
 } from "./types.ts";
 
@@ -150,6 +153,26 @@ export async function createChat(
   return toChat(data);
 }
 
+export async function updateChat(
+  chatId: number,
+  updateRequest: UpdateChatRequest,
+  token?: string,
+): Promise<Chat> {
+  const response = await fetch(`${baseUrl}/chats/${chatId}`, {
+    method: "PUT",
+    headers: authHeaders(token),
+    credentials: "include",
+    body: JSON.stringify(updateRequest),
+  });
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
+
+  const data = await response.json() as ApiChat;
+  return toChat(data);
+}
+
 export async function fetchChatMessages(chatId: number): Promise<Message[]> {
   const response = await fetch(`${baseUrl}/chats/${chatId}/messages`);
 
@@ -159,6 +182,69 @@ export async function fetchChatMessages(chatId: number): Promise<Message[]> {
 
   const data = await response.json() as ApiMessagesResponse;
   return data.messages.map(toMessage);
+}
+
+export async function createChatMessage(
+  chatId: number,
+  createRequest: CreateMessageRequest,
+  token?: string,
+): Promise<Message> {
+  const response = await fetch(`${baseUrl}/chats/${chatId}/messages`, {
+    method: "POST",
+    headers: authHeaders(token),
+    credentials: "include",
+    body: JSON.stringify(createRequest),
+  });
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
+
+  const data = await response.json() as ApiMessage;
+  return toMessage(data);
+}
+
+export async function updateChatMessage(
+  chatId: number,
+  messageId: number,
+  updateRequest: UpdateMessageRequest,
+  token?: string,
+): Promise<Message> {
+  const response = await fetch(
+    `${baseUrl}/chats/${chatId}/messages${toQueryString({ message_id: messageId })}`,
+    {
+      method: "PATCH",
+      headers: authHeaders(token),
+      credentials: "include",
+      body: JSON.stringify(updateRequest),
+    },
+  );
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
+
+  const data = await response.json() as ApiMessage;
+  return toMessage(data);
+}
+
+export async function deleteChatMessage(
+  chatId: number,
+  messageId: number,
+  token?: string,
+): Promise<void> {
+  const response = await fetch(
+    `${baseUrl}/chats/${chatId}/messages${toQueryString({ message_id: messageId })}`,
+    {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    return handleApiError(response);
+  }
 }
 
 export async function fetchChatMembers(

@@ -38,6 +38,25 @@ export interface CreateChatRequest {
 	owner_id: number;
 }
 
+export interface UpdateChatRequest {
+	name: string;
+	owner_id: number;
+}
+
+export interface CreateMessageRequest {
+	text: string;
+	account_id: number;
+	chat_id: number;
+	created_at: string;
+}
+
+export interface UpdateMessageRequest {
+	text: string;
+	account_id: number;
+	chat_id: number;
+	owner_id: number;
+}
+
 export interface MeResponse {
 	id: number;
 	username: string;
@@ -106,6 +125,8 @@ export interface Message {
 export interface MessageWithAccount {
 	id: number;
 	text: string;
+	accountId: number;
+	chatId: number;
 	account: Account | null;
 	timestamp: Date;
 }

@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ChatsIndexRouteImport } from './routes/chats/index'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as ChatsChatIdRouteImport } from './routes/chats/$chatId'
+import { Route as ChatsChatIdSettingsRouteImport } from './routes/chats/$chatId.settings'
 import { Route as AccountSettingsRouteImport } from './routes/account/settings'
 import { Route as AccountPasswordRouteImport } from './routes/account/password'
 
@@ -48,6 +49,11 @@ const ChatsChatIdRoute = ChatsChatIdRouteImport.update({
   path: '/chats/$chatId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChatsChatIdSettingsRoute = ChatsChatIdSettingsRouteImport.update({
+  id: '/chats/$chatId/settings',
+  path: '/chats/$chatId/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountSettingsRoute = AccountSettingsRouteImport.update({
   id: '/account/settings',
   path: '/account/settings',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/account/password': typeof AccountPasswordRoute
   '/account/settings': typeof AccountSettingsRoute
   '/chats/$chatId': typeof ChatsChatIdRoute
+  '/chats/$chatId/settings': typeof ChatsChatIdSettingsRoute
   '/account/': typeof AccountIndexRoute
   '/chats/': typeof ChatsIndexRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/account/password': typeof AccountPasswordRoute
   '/account/settings': typeof AccountSettingsRoute
   '/chats/$chatId': typeof ChatsChatIdRoute
+  '/chats/$chatId/settings': typeof ChatsChatIdSettingsRoute
   '/account': typeof AccountIndexRoute
   '/chats': typeof ChatsIndexRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/account/password': typeof AccountPasswordRoute
   '/account/settings': typeof AccountSettingsRoute
   '/chats/$chatId': typeof ChatsChatIdRoute
+  '/chats/$chatId/settings': typeof ChatsChatIdSettingsRoute
   '/account/': typeof AccountIndexRoute
   '/chats/': typeof ChatsIndexRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/account/password'
     | '/account/settings'
     | '/chats/$chatId'
+    | '/chats/$chatId/settings'
     | '/account/'
     | '/chats/'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/account/password'
     | '/account/settings'
     | '/chats/$chatId'
+    | '/chats/$chatId/settings'
     | '/account'
     | '/chats'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/account/password'
     | '/account/settings'
     | '/chats/$chatId'
+    | '/chats/$chatId/settings'
     | '/account/'
     | '/chats/'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   AccountPasswordRoute: typeof AccountPasswordRoute
   AccountSettingsRoute: typeof AccountSettingsRoute
   ChatsChatIdRoute: typeof ChatsChatIdRoute
+  ChatsChatIdSettingsRoute: typeof ChatsChatIdSettingsRoute
   AccountIndexRoute: typeof AccountIndexRoute
   ChatsIndexRoute: typeof ChatsIndexRoute
 }
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatsChatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/chats/$chatId/settings': {
+      id: '/chats/$chatId/settings'
+      path: '/chats/$chatId/settings'
+      fullPath: '/chats/$chatId/settings'
+      preLoaderRoute: typeof ChatsChatIdSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account/settings': {
       id: '/account/settings'
       path: '/account/settings'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountPasswordRoute: AccountPasswordRoute,
   AccountSettingsRoute: AccountSettingsRoute,
   ChatsChatIdRoute: ChatsChatIdRoute,
+  ChatsChatIdSettingsRoute: ChatsChatIdSettingsRoute,
   AccountIndexRoute: AccountIndexRoute,
   ChatsIndexRoute: ChatsIndexRoute,
 }

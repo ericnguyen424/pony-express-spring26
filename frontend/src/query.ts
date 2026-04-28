@@ -43,6 +43,8 @@ export const chatMessagesWithAccountsQuery = (chatId: number) =>
       return messages.map((message) => ({
         id: message.id,
         text: message.text,
+        accountId: message.accountId,
+        chatId: message.chatId,
         account: accountById.get(message.accountId) ?? null,
         timestamp: message.timestamp,
       }));
