@@ -2,7 +2,7 @@ import os
 
 from typing import Literal
 
-from fastapi import APIRouter, Form, Request, Response, status
+from fastapi import APIRouter, Depends, Form, Request, Response, status
 from jose import ExpiredSignatureError, JWTError, jwt
 
 from app import auth
@@ -18,14 +18,18 @@ from app.models.shared import CollectionMetadata
 # Database Imports
 from app.database import accounts as accounts_db
 from app.database.schema import Account as DBAccount
-from app.dependencies import DBSession
+from app.dependencies import DBSession, get_current_account
 from app.exceptions import (
     BadRequestException,
     NotAuthenticatedException,
     UnauthorizedAccessException,
 )
 
-accounts_router = APIRouter(prefix="/accounts", tags=["Accounts"])
+accounts_router = APIRouter(
+    prefix="/accounts",
+    tags=["Accounts"],
+    dependencies=[Depends(get_current_account)],
+)
 
 JWT_ALGORITHM = "HS256"
 JWT_SECRET_KEY = os.environ.get(
