@@ -25,6 +25,24 @@ import type {
 
 const baseUrl = "http://127.0.0.1:8000";
 
+function getStoredAccessToken(): string | undefined {
+  if (typeof localStorage === "undefined") {
+    return undefined;
+  }
+
+  const storedAuth = localStorage.getItem("pony_express_auth");
+  if (!storedAuth) {
+    return undefined;
+  }
+
+  try {
+    const parsedAuth = JSON.parse(storedAuth) as { token?: unknown };
+    return typeof parsedAuth.token === "string" ? parsedAuth.token : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export class ApiError extends Error {
   status: number;
   details: unknown;
@@ -65,13 +83,15 @@ export async function handleApiError(response: Response): Promise<never> {
 }
 
 function authHeaders(token?: string): HeadersInit {
-  if (!token) {
+  const accessToken = token ?? getStoredAccessToken();
+
+  if (!accessToken) {
     return { "Content-Type": "application/json" };
   }
 
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
+    Authorization: `Bearer ${accessToken}`,
   };
 }
 
@@ -124,7 +144,10 @@ function toAccount(account: ApiAccount): Account {
 }
 
 export async function fetchChats(sort: ChatSort = "id"): Promise<Chat[]> {
-  const response = await fetch(`${baseUrl}/chats${toQueryString({ sort })}`);
+  const response = await fetch(`${baseUrl}/chats${toQueryString({ sort })}`, {
+    headers: authHeaders(),
+    credentials: "include",
+  });
 
   if (!response.ok) {
     return handleApiError(response);
@@ -174,7 +197,10 @@ export async function updateChat(
 }
 
 export async function fetchChatMessages(chatId: number): Promise<Message[]> {
-  const response = await fetch(`${baseUrl}/chats/${chatId}/messages`);
+  const response = await fetch(`${baseUrl}/chats/${chatId}/messages`, {
+    headers: authHeaders(),
+    credentials: "include",
+  });
 
   if (!response.ok) {
     return handleApiError(response);
@@ -272,6 +298,10 @@ export async function fetchChatMembers(
 ): Promise<Account[]> {
   const response = await fetch(
     `${baseUrl}/chats/${chatId}/accounts${toQueryString({ sort })}`,
+    {
+      headers: authHeaders(),
+      credentials: "include",
+    },
   );
 
   if (!response.ok) {
