@@ -1,188 +1,88 @@
-# Pony Express -- Backend
+# Pony Express
 
-Backend for Pony Express project.
+A full-stack group chat app. People can register, log in, create chats, add or remove members, and send, edit and delete messages. It has a FastAPI + SQLModel REST API and a React + TypeScript frontend, with cookie-based JWT authentication between them.
 
-- The RestAPI is built using the [FastAPI](https://fastapi.tiangolo.com/) framework.
-- Database interactions are managed using the [SQLModel](https://sqlmodel.tiangolo.com/)
-  library.
+Built for a full-stack web development course at the University of Utah (Spring 2026).
 
----
+## Features
 
-## Setup
+- **Accounts:** register, log in and out, update your username or email, change your password, delete your account
+- **Chats:** create, rename and delete chats; add and remove members; owner and member permissions
+- **Messages:** send, edit and delete messages, with each message linked to its author and chat
+- **Auth:** JWTs issued by the API and stored in an HTTP-only cookie (Bearer tokens also supported), with Argon2 password hashing and automatic upgrade of legacy bcrypt hashes on login
+- **Tests:** pytest suite covering the database layer and every API router, run in CI on each pull request
 
-This project uses [uv](https://docs.astral.sh/uv/) to manage python versions and packages.
+## Tech stack
 
-### Install `uv`
+| Layer | Tools |
+| --- | --- |
+| Backend | Python 3.13, FastAPI, SQLModel (SQLAlchemy + Pydantic), SQLite, python-jose, Argon2 |
+| Frontend | React 19, TypeScript, TanStack Router, TanStack Query, Tailwind CSS, Vite, Deno |
+| Tooling | uv, pytest + pytest-cov, Ruff, GitHub Actions |
 
-- On macOS and Linux
+## Architecture
 
-  ```bash
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-  ```
-
-- On Windows
-
-  ```bash
-  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-  ```
-
-### Install a python version
-
-Install and use Python 3.13 in the project.
-See [uv: Install Python](https://docs.astral.sh/uv/guides/install-python/) for more
-information.
-
-```bash
-# install python3.13
-uv python install 3.13
-
-# use python3.13 in current directory
-uv python pin 3.13
+```
+React (Vite, :5173)  ──fetch, credentials: include──▶  FastAPI (:8000)
+  TanStack Router: pages                                  routers/   HTTP endpoints, auth checks
+  TanStack Query: server state + caching                  models/    request/response schemas
+                                                          database/  queries via SQLModel
+                                                          schema.py  tables ──▶ SQLite
 ```
 
-### Build project virtual environment
+The data model has four tables: `accounts`, `chats`, `messages`, and a `chat_memberships` join table for the many-to-many relationship between accounts and chats. Foreign keys use cascade rules so that deleting a chat removes its messages and memberships, while deleting an account keeps its messages with the author set to null.
 
-Create a virtual environment for the project.
-See [uv: Working on projects](https://docs.astral.sh/uv/guides/projects/) for more
-information.
+## Running locally
 
-```bash
-uv sync
-```
+**Prerequisites:** [uv](https://docs.astral.sh/uv/) and [Deno](https://deno.com/).
 
-*Note: The project was already initialized and a lockfile was already generated.
-Every invocation of `uv run` will automatically sync the virtual environment with the
-dependencies, so manual syncing is generally unnecessary.*
-
-### Check
-
-Verify that the installation of the python version and the project environment were
-successful:
+### Backend
 
 ```bash
-# check python version
-uv run python --version                             # Python 3.13.3
-
-# check location of project executable (macOS and Linux)
-uv run which python                                 # /path/to/project/.venv/bin/python
-
-# see installed python packages (macOS and Linux)
-ls .venv/lib/python3.13/site-packages/
+uv sync                    # install Python 3.13 dependencies
+uv run fastapi dev         # API at http://127.0.0.1:8000
 ```
 
-### IDE
+Interactive API docs are served at <http://127.0.0.1:8000/docs>.
 
-Depending on your IDE, you may need to specify the Python interpreter to be the one
-created by `uv`, located at `./.venv/bin/python`. See your IDE's documentation for
-selecting a Python interpreter.
+Set `PONY_EXPRESS_JWT_SECRET_KEY` to use your own signing key. Without it, a development default is used.
 
----
-
-## Server
-
-A web server is available via the [uvicorn](https://uvicorn.dev/) python package.
-The `fastapi-cli` python package can auto-detect the FastAPI application and then
-run `uvicorn`.
-
-Use any of the following commands to run a local development server:
+### Frontend
 
 ```bash
-# using the fastapi-cli
-uv run fastapi dev                                  # detect app and run on port 8000
-
-# using uvicorn directly
-uv run uvicorn app.main:app --reload                # run on port 8000
-uv run uvicorn app.main:app --reload --port 8001    # run on specific port
+cd frontend
+deno task dev              # app at http://localhost:5173
 ```
 
-With the local server running, you can
+## API overview
 
-- Make HTTP requests against <http://127.0.0.1:8000> or <http://localhost:8000>
-- See OpenAPI spec at <http://127.0.0.1:8000/openapi.json> or <http://localhost:8000/openapi.json>
-- See the Swagger docs at <http://127.0.0.1:8000/docs> or <http://localhost:8000/docs>
-- See the ReDoc docs at <http://127.0.0.1:8000/redoc> or <http://localhost:8000/redoc>
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| POST | `/auth/registrations` | Create an account |
+| POST | `/auth/logins` | Log in (sets the auth cookie) |
+| DELETE | `/auth/logins` | Log out |
+| POST | `/auth/tokens` | Get a bearer token |
+| GET / PATCH / DELETE | `/accounts/me` | Read, update or delete your account |
+| PUT | `/accounts/me/password` | Change your password |
+| GET | `/accounts`, `/accounts/{id}` | List or look up accounts |
+| GET / POST | `/chats` | List your chats or create one |
+| GET / PUT / DELETE | `/chats/{id}` | Read, rename or delete a chat |
+| GET / PUT / DELETE | `/chats/{id}/accounts` | List, add or remove members |
+| GET / POST / PATCH / DELETE | `/chats/{id}/messages` | Read, send, edit or delete messages |
 
-*Note: Don't forget to close the server when you are finished.*
-
----
-
-## Linting / Formatting
-
-Formatting and linting is done using [ruff](https://docs.astral.sh/ruff/).
-
-### Linting
-
-Use the following commands to lint your project:
+## Testing
 
 ```bash
-uv run ruff check                                   # lint all files in project
-uv run ruff check app/                              # lint all files in a directory
-uv run ruff check app/main.py                       # lint a specific file
-uv run ruff check --fix                             # lint all files and fix any fixable errors
+uv run pytest --cov=app --cov-report=term-missing   # tests with coverage
+uv run ruff check && uv run ruff format --check     # lint and format checks
 ```
 
-See the [Linting documentation](https://docs.astral.sh/ruff/linter/) for more information.
+## What I built
 
-### Formatting
+<!-- Edit this to match exactly what you wrote versus what the course provided. -->
 
-Use the following commands to format your project:
-
-```bash
-uv run ruff format                                  # format all files in project
-uv run ruff format --check                          # list files that need formatting
-uv run ruff format app/                             # format all files in a directory
-uv run ruff format app/main.py                      # format a specific file
-```
-
-See the [Formatting documentation](https://docs.astral.sh/ruff/formatter/) for more
-information.
-
-### IDE Setup
-
-Ruff can be integrated with many IDE's for automatic linting and formatting.
-See [Ruff: Editor setup](https://docs.astral.sh/ruff/editors/setup/) for setup
-specific to your IDE.
-
----
-
-## Tests
-
-Testing is done using the [pytest](https://docs.pytest.org/en/stable/) package.
-
-Use the following commands to run your test suite:
-
-```bash
-# run all tests
-uv run pytest
-
-# run tests with varying degrees of detail
-uv run pytest -q                                  # less verbose (quiet)
-uv run pytest -v                                  # more verbose
-uv run pytest -vv                                 # extra verbose
-
-# run tests with app coverage
-uv run pytest --cov=app --cov-report=term-missing
-
-# run subset of tests
-uv run pytest tests/                              # runs tests in folder
-uv run pytest tests/main_test.py                  # runs tests in a file
-uv run pytest tests/main_test.py::test_status     # runs specific test
-```
-
----
-
-## Initialization
-
-For documentation purposes, the following commands were used to create this backend
-application:
-
-```bash
-# initialize the uv application
-uv init --app --name pony-express-backend
-
-# add dependencies
-uv add "fastapi[standard]" "pydantic[email]" "pwdlib[argon2,bcrypt]" pydantic-settings uvicorn sqlmodel python-jose python-multipart
-
-# add development dependencies
-uv add pytest pytest-cov httpx ruff ipython --dev
-```
+- Designed the database schema and relationships, including cascade and restrict delete rules
+- Implemented the REST API routers, request validation and custom error responses
+- Built JWT authentication with HTTP-only cookies, Argon2 hashing and bcrypt-to-Argon2 migration
+- Built the React frontend: login and registration, chat list, chat view with message editing, chat settings for managing members, and account settings
+- Wrote the pytest suite for the database layer and API routes
